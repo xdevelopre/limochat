@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#a7ef45">
-<title>Limo Chat | نسخه 1.07</title>
+<title>Limo Chat | نسخه 1.10</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -63,7 +63,7 @@ button{cursor:pointer}
 .pin-mark{color:var(--primary-dark);margin-right:5px}
 .badge-count{border-radius:20px;background:var(--primary);color:#233717;font-size:10px;padding:2px 7px}
 .bottom-nav{position:absolute;bottom:0;left:0;right:0;min-height:72px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));display:flex;justify-content:space-around;align-items:center;background:var(--panel);backdrop-filter:var(--blur);border-top:1px solid var(--border);z-index:8;transition:var(--transition)}
-.bottom-nav.hidden{transform:translateY(120%)}
+.bottom-nav.hidden{transform:translateY(120%);visibility:hidden;pointer-events:none}
 .nav-item{min-width:75px;display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted);font-size:11px;cursor:pointer;padding:5px 12px;border-radius:14px}
 .nav-item i{font-size:20px}
 .nav-item.active{color:var(--primary-dark);background:var(--primary-soft)}
@@ -179,150 +179,1017 @@ button{cursor:pointer}
 <body>
 <div id="app">
   <section id="screen-splash" class="screen splash active"><div class="logo"><i class="fa-solid fa-lemon"></i></div><h1>لیمو چت</h1><p>گفت‌وگویی تازه، ساده و سبز</p></section>
-  <section id="screen-auth" class="screen auth-screen"><div class="auth-card"><div class="brand-mark"><i class="fa-solid fa-lemon"></i></div><h1 class="auth-title" id="auth-title">ورود به لیمو چت</h1><p class="auth-sub" id="auth-sub">با آیدی و رمز عبور یا حساب گوگل وارد شوید.</p><div class="field"><i class="fa-solid fa-user"></i><input id="auth-username" autocomplete="username" placeholder="آیدی کاربری" dir="ltr"></div><div class="field"><i class="fa-solid fa-lock"></i><input id="auth-password" type="password" autocomplete="current-password" placeholder="رمز عبور (حداقل ۶ کاراکتر)" dir="ltr"></div><button class="btn full" id="auth-submit" onclick="handleAuth()">ورود</button><button class="btn full google" onclick="loginWithGoogle()"><i class="fa-brands fa-google"></i> ورود با حساب گوگل</button><p class="auth-switch" onclick="toggleAuthMode()"><span id="auth-switch-text">حساب ندارید؟ <b>ثبت‌نام کنید</b></span></p><p class="tiny-note">ورود با آیدی و رمز عبور یا Google انجام می‌شود. ورود گوگل نیازمند فعال بودن ارائه‌دهنده Google در Firebase است.</p></div></section>
+  <section id="screen-auth" class="screen auth-screen"><div class="auth-card"><div class="brand-mark"><i class="fa-solid fa-lemon"></i></div><h1 class="auth-title" id="auth-title">ورود به لیمو چت</h1><p class="auth-sub" id="auth-sub">با آیدی و رمز عبور یا حساب گوگل وارد شوید.</p><div class="field"><i class="fa-solid fa-user"></i><input id="auth-username" autocomplete="username" placeholder="آیدی کاربری" dir="ltr"></div><div class="field"><i class="fa-solid fa-lock"></i><input id="auth-password" type="password" autocomplete="current-password" placeholder="رمز عبور (حداقل ۶ کاراکتر)" dir="ltr"></div><button class="btn full" id="auth-submit" onclick="handleAuth()">ورود</button><button class="btn full google" onclick="loginWithGoogle()"><i class="fa-brands fa-google"></i> ورود با حساب گوگل</button><p class="auth-switch" onclick="toggleAuthMode()"><span id="auth-switch-text">حساب ندارید؟ <b>ثبت‌نام کنید</b></span></p><p class="tiny-note">ورود با آیدی و رمز عبور یا Google انجام می‌شود. ورود گوگل به فعال‌سازی Google Provider در Supabase نیاز دارد.</p></div></section>
   <section id="screen-main" class="screen"><header class="topbar"><div class="top-title">لیمو چت</div><div class="top-actions"><button class="icon-btn" aria-label="جستجو" onclick="openSubMenu('search')"><i class="fa-solid fa-magnifying-glass"></i></button><button class="icon-btn" aria-label="مخاطبان" onclick="openSubMenu('contacts')"><i class="fa-solid fa-user-group"></i></button><button class="icon-btn" aria-label="تنظیمات" onclick="switchTab('settings')"><i class="fa-solid fa-gear"></i></button></div></header><div class="scroll-area" id="chat-list"></div><button class="fab" onclick="openSubMenu('search')" aria-label="شروع گفتگو"><i class="fa-solid fa-pen"></i></button></section>
   <section id="screen-calls" class="screen"><header class="topbar"><div class="top-title" style="color:var(--text)">تماس‌ها</div><button class="icon-btn" onclick="refreshCalls()"><i class="fa-solid fa-rotate"></i></button></header><div class="calls-content" id="calls-list"><div class="empty-state"><i class="fa-solid fa-phone"></i><p>تماس‌های صوتی یک‌به‌یک در این بخش نمایش داده می‌شوند.</p></div></div></section>
-  <section id="screen-settings" class="screen"><header class="topbar"><div class="top-title" style="color:var(--text)">تنظیمات</div></header><div class="settings-scroll"><div class="profile-card" onclick="openSubMenu('account')"><div class="avatar" id="settings-avatar">ل</div><div class="profile-copy"><strong id="settings-name">کاربر لیمو</strong><small id="settings-username">@user</small></div><i class="fa-solid fa-chevron-left" style="color:var(--muted)"></i></div><div class="section-label">حساب و حریم خصوصی</div><div class="setting-row" onclick="openSubMenu('account')"><i class="fa-solid fa-user-gear"></i><span>حساب کاربری، آیدی و رمز عبور</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('privacy')"><i class="fa-solid fa-shield-halved"></i><span>حریم خصوصی و چت ایمن</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('blocked')"><i class="fa-solid fa-ban"></i><span>کاربران مسدودشده</span><i class="fa-solid fa-chevron-left"></i></div><div class="section-label">شخصی‌سازی و برنامه</div><div class="setting-row" onclick="openSubMenu('theme')"><i class="fa-solid fa-palette"></i><span>تم مات Aero و ظاهر</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('notifications')"><i class="fa-solid fa-bell"></i><span>اعلان‌ها</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('contacts')"><i class="fa-solid fa-address-book"></i><span>مخاطبان و دعوت دوستان</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('data')"><i class="fa-solid fa-database"></i><span>داده‌ها و ذخیره‌سازی</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('about')"><i class="fa-solid fa-circle-info"></i><span>درباره لیمو چت</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="logout()" style="color:var(--danger)"><i class="fa-solid fa-right-from-bracket" style="color:var(--danger)"></i><span>خروج از حساب</span></div><p class="tiny-note">Limo Chat v1.07</p></div></section>
+  <section id="screen-settings" class="screen"><header class="topbar"><div class="top-title" style="color:var(--text)">تنظیمات</div></header><div class="settings-scroll"><div class="profile-card" onclick="openSubMenu('account')"><div class="avatar" id="settings-avatar">ل</div><div class="profile-copy"><strong id="settings-name">کاربر لیمو</strong><small id="settings-username">@user</small></div><i class="fa-solid fa-chevron-left" style="color:var(--muted)"></i></div><div class="section-label">حساب و حریم خصوصی</div><div class="setting-row" onclick="openSubMenu('account')"><i class="fa-solid fa-user-gear"></i><span>حساب کاربری، آیدی و رمز عبور</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('privacy')"><i class="fa-solid fa-shield-halved"></i><span>حریم خصوصی و چت ایمن</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('blocked')"><i class="fa-solid fa-ban"></i><span>کاربران مسدودشده</span><i class="fa-solid fa-chevron-left"></i></div><div class="section-label">شخصی‌سازی و برنامه</div><div class="setting-row" onclick="openSubMenu('theme')"><i class="fa-solid fa-palette"></i><span>تم مات Aero و ظاهر</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('notifications')"><i class="fa-solid fa-bell"></i><span>اعلان‌ها</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('contacts')"><i class="fa-solid fa-address-book"></i><span>مخاطبان و دعوت دوستان</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('data')"><i class="fa-solid fa-database"></i><span>داده‌ها و ذخیره‌سازی</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('about')"><i class="fa-solid fa-circle-info"></i><span>درباره لیمو چت</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="logout()" style="color:var(--danger)"><i class="fa-solid fa-right-from-bracket" style="color:var(--danger)"></i><span>خروج از حساب</span></div><p class="tiny-note">Limo Chat v1.10</p></div></section>
   <section id="screen-chat-room" class="screen"><header class="chat-header"><button class="icon-btn" onclick="closeChatRoom()"><i class="fa-solid fa-arrow-right"></i></button><div class="avatar" id="room-avatar">ل</div><div class="chat-head-info"><div class="chat-head-name" id="room-name">گفتگو</div><div class="chat-head-status" id="room-status">پیام‌رسانی</div></div><div class="chat-header-actions"><button class="icon-btn" id="call-button" onclick="startVoiceCall()" title="تماس صوتی"><i class="fa-solid fa-phone"></i></button><button class="icon-btn" onclick="openChatActions()" title="گزینه‌ها"><i class="fa-solid fa-ellipsis-vertical"></i></button></div></header><div class="messages" id="messages"></div><div class="reply-preview" id="reply-preview"><span id="reply-preview-text"></span><button class="icon-btn" style="width:25px;height:25px" onclick="clearReply()"><i class="fa-solid fa-xmark"></i></button></div><div class="input-area"><button class="attach-btn" onclick="document.getElementById('image-file').click()" title="ارسال عکس"><i class="fa-regular fa-image"></i></button><input id="image-file" type="file" accept="image/*" hidden onchange="chooseImage(event)"><input class="message-input" id="message-input" placeholder="پیام بنویسید..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"><button class="send-btn" onclick="sendMessage()" aria-label="ارسال"><i class="fa-solid fa-paper-plane"></i></button></div></section>
-  <nav class="bottom-nav" id="bottom-nav"><div class="nav-item active" onclick="switchTab('main',this)"><i class="fa-solid fa-comments"></i><span>چت‌ها</span></div><div class="nav-item" onclick="switchTab('calls',this)"><i class="fa-solid fa-phone"></i><span>تماس‌ها</span></div><div class="nav-item" onclick="switchTab('settings',this)"><i class="fa-solid fa-gear"></i><span>تنظیمات</span></div></nav>
+  <nav class="bottom-nav hidden" id="bottom-nav" aria-hidden="true"><div class="nav-item active" onclick="switchTab('main',this)"><i class="fa-solid fa-comments"></i><span>چت‌ها</span></div><div class="nav-item" onclick="switchTab('calls',this)"><i class="fa-solid fa-phone"></i><span>تماس‌ها</span></div><div class="nav-item" onclick="switchTab('settings',this)"><i class="fa-solid fa-gear"></i><span>تنظیمات</span></div></nav>
   <div class="submenu" id="submenu"><header class="submenu-head"><button onclick="closeSubMenu()"><i class="fa-solid fa-arrow-right"></i></button><span id="submenu-title">تنظیمات</span></header><div class="submenu-body" id="submenu-body"></div></div>
   <div class="overlay" id="action-overlay" onclick="closeActionMenu()"><div class="sheet" onclick="event.stopPropagation()"><div class="sheet-title" id="action-title">گزینه‌ها</div><div id="action-items"></div></div></div>
   <div class="call-overlay" id="call-overlay"><div id="call-label">تماس صوتی</div><div class="call-person"><div class="avatar" id="call-avatar">ل</div><h2 id="call-name">کاربر</h2><p id="call-status">در حال اتصال...</p><div class="incoming-actions" id="incoming-actions" style="display:none"><button class="accept" onclick="acceptIncomingCall()"><i class="fa-solid fa-phone"></i></button><button class="decline" onclick="declineIncomingCall()"><i class="fa-solid fa-phone-slash"></i></button></div></div><div class="call-controls" id="active-call-controls"><button class="call-control" onclick="toggleMute()" id="mute-button"><i class="fa-solid fa-microphone"></i></button><button class="call-control end" onclick="endCall()"><i class="fa-solid fa-phone-slash"></i></button><button class="call-control" onclick="toggleSpeaker()" id="speaker-button"><i class="fa-solid fa-volume-high"></i></button></div><audio id="remote-audio" autoplay playsinline></audio></div>
   <div class="image-preview" id="image-preview"><div class="image-card"><h3>آماده‌سازی تصویر</h3><img id="image-preview-img" alt="پیش‌نمایش تصویر"><label>کیفیت فشرده‌سازی: <b id="quality-label">۸۰٪</b></label><input id="image-quality" type="range" min="35" max="95" value="80" oninput="updateImageQuality(this.value)"><p class="help" id="image-size-label">در حال محاسبه حجم...</p><div class="image-actions"><button class="btn outline" onclick="cancelImage()">انصراف</button><button class="btn" id="send-image-button" onclick="sendPreparedImage()">ارسال تصویر</button></div></div></div>
   <div class="toast" id="toast"></div>
 </div>
-<script>
-// لایه رابط کاربری مستقل از Firebase
-window.isLoginMode=true;window.splashTimeout=setTimeout(()=>{if(document.getElementById('screen-splash')?.classList.contains('active'))navigateTo('auth')},3200);
-window.showToast=(message)=>{const el=document.getElementById('toast');el.textContent=message;el.classList.add('show');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>el.classList.remove('show'),3000)};
-window.navigateTo=(name)=>{document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById('screen-'+name)?.classList.add('active');const hide=['splash','auth','chat-room'].includes(name);document.getElementById('bottom-nav').classList.toggle('hidden',hide);clearTimeout(window.splashTimeout)};
-window.switchTab=(name,el)=>{document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));const idx={main:0,calls:1,settings:2}[name];const target=el||document.querySelectorAll('.nav-item')[idx];target?.classList.add('active');navigateTo(name);if(name==='calls')refreshCalls()};
-window.toggleAuthMode=()=>{isLoginMode=!isLoginMode;document.getElementById('auth-title').textContent=isLoginMode?'ورود به لیمو چت':'ساخت حساب جدید';document.getElementById('auth-sub').textContent=isLoginMode?'با آیدی و رمز عبور یا حساب گوگل وارد شوید.':'یک آیدی و رمز عبور امن انتخاب کنید.';document.getElementById('auth-submit').textContent=isLoginMode?'ورود':'ساخت حساب';document.getElementById('auth-switch-text').innerHTML=isLoginMode?'حساب ندارید؟ <b>ثبت‌نام کنید</b>':'حساب دارید؟ <b>وارد شوید</b>'};
-window.openSubMenu=(key)=>{renderSubMenu(key);document.getElementById('submenu').classList.add('active')};window.closeSubMenu=()=>document.getElementById('submenu').classList.remove('active');
-window.closeActionMenu=()=>document.getElementById('action-overlay').classList.remove('show');
-</script>
 <script type="module">
-import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-import {getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,GoogleAuthProvider,signInWithPopup,EmailAuthProvider,reauthenticateWithCredential,updatePassword,updateEmail,linkWithCredential} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import {getFirestore,collection,doc,setDoc,getDoc,getDocs,query,where,addDoc,onSnapshot,orderBy,updateDoc,serverTimestamp,deleteDoc,arrayUnion,arrayRemove} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-import {getStorage,ref as storageRef,uploadBytes,getDownloadURL} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// تنظیمات Firebase پروژه حفظ شده است؛ کلیدها و شناسه‌ها تغییر نکرده‌اند.
-const firebaseConfig={
-  apiKey:"AIzaSyB6JaZOfaD_9RwjoHQ9VrR5MS8y68TCQpA",
-  authDomain:"limochatserver.firebaseapp.com",
-  projectId:"limochatserver",
-  storageBucket:"limochatserver.firebasestorage.app",
-  messagingSenderId:"906816241850",
-  appId:"1:906816241850:web:44492ab79247e81fa00283"
+// کلید publishable در مرورگر قابل استفاده است؛ هرگز service_role key را اینجا قرار ندهید.
+const SUPABASE_URL = 'https://zvgpqakgaudtrxjgsrfk.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_lSw6y-X7uR-H8QBxelToNQ_0RzQ9P2P';
+const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+});
+
+let isLoginMode = true;
+let currentUserData = null;
+let currentAuthUser = null;
+let currentChatId = null;
+let currentChatType = null;
+let currentChatName = '';
+let currentChatAvatar = '';
+let currentChatParticipants = [];
+let chatChannel = null;
+let messageChannel = null;
+let incomingCallChannel = null;
+let callChannel = null;
+let iceChannel = null;
+let activeMessage = null;
+let activeChatInfo = null;
+let replyTarget = null;
+let blockedUsers = [];
+let botMessages = [];
+let preparedImage = null;
+let callRow = null;
+let callPc = null;
+let localStream = null;
+let callRole = null;
+let callMuted = false;
+let callSpeaker = true;
+let pendingIncoming = null;
+let seenIceCandidates = new Set();
+let pendingIceCandidates = [];
+let currentSessionUid = null;
+let bootstrapPending = true;
+let splashStartedAt = Date.now();
+let bootstrapTimer = null;
+let userPrefs = { anonymous: false, readReceipts: true, notifications: false, showOnline: true, theme: 'aero', primary: '#91d832' };
+
+const $ = id => document.getElementById(id);
+const safe = (value = '') => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
+const normalizeUsername = value => String(value || '').trim().toLowerCase().replace(/^@/, '');
+const userEmail = username => `${normalizeUsername(username)}@limochat.app`;
+const isPrivateChat = () => currentChatType === 'private';
+const isBlocked = uid => blockedUsers.includes(uid);
+const prefsKey = () => `limo_prefs_${currentUserData?.uid || 'guest'}`;
+const pinKey = () => `limo_pins_${currentUserData?.uid || 'guest'}`;
+const hiddenKey = () => `limo_hidden_${currentUserData?.uid || 'guest'}`;
+const botKey = () => `limo_bot_${currentUserData?.uid || 'guest'}`;
+const getSet = key => { try { return new Set(JSON.parse(localStorage.getItem(key) || '[]')); } catch { return new Set(); } };
+const saveSet = (key, set) => localStorage.setItem(key, JSON.stringify([...set]));
+
+window.showToast = message => {
+  const el = $('toast');
+  if (!el) return;
+  el.textContent = message;
+  el.classList.add('show');
+  clearTimeout(window.toastTimer);
+  window.toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
 };
-const app=initializeApp(firebaseConfig);const auth=getAuth(app);const db=getFirestore(app);const storage=getStorage(app);
-let currentUserData=null,currentChatId=null,currentChatType=null,currentChatName='',currentChatAvatar='',currentChatParticipants=[],unsubscribeChats=null,unsubscribeMessages=null,activeMessage=null,activeChatInfo=null,replyTarget=null,blockedUsers=[];
-let userPrefs={anonymous:false,readReceipts:true,notifications:false,showOnline:true};
-let botMessages=[];let preparedImage=null;let incomingCallUnsub=null;let callRef=null,callPc=null,localStream=null,callSnapshotUnsub=null,candidateUnsub=null,callRole=null,callMuted=false,callSpeaker=true,processingIncoming=new Set();
-const $=id=>document.getElementById(id);const safe=(v='')=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const prefsKey=()=>`limo_prefs_${currentUserData?.uid||'guest'}`;const pinKey=()=>`limo_pins_${currentUserData?.uid||'guest'}`;const hiddenKey=()=>`limo_hidden_${currentUserData?.uid||'guest'}`;const botKey=()=>`limo_bot_${currentUserData?.uid||'guest'}`;
-function loadPrefs(){try{userPrefs={...userPrefs,...JSON.parse(localStorage.getItem(prefsKey())||'{}')}}catch{}}
-function savePrefs(){localStorage.setItem(prefsKey(),JSON.stringify(userPrefs))}
-function getSet(key){try{return new Set(JSON.parse(localStorage.getItem(key)||'[]'))}catch{return new Set()}}
-function saveSet(key,set){localStorage.setItem(key,JSON.stringify([...set]))}
-function userEmail(username){return `${username.toLowerCase()}@limochat.com`}
-function normalizeUsername(s){return String(s||'').trim().toLowerCase().replace(/^@/,'')}
-function isBlocked(uid){return blockedUsers.includes(uid)}
-function isPrivateChat(){return currentChatType==='private'}
-function messagesRef(chatId=currentChatId){return chatId==='global'?collection(db,'global_messages'):collection(db,'chats',chatId,'messages')}
-function messageRef(messageId,chatId=currentChatId){return chatId==='global'?doc(db,'global_messages',messageId):doc(db,'chats',chatId,'messages',messageId)}
-function getTimestamp(value){try{if(value?.toDate)return value.toDate();if(value instanceof Date)return value;if(value?.seconds)return new Date(value.seconds*1000);if(typeof value==='string'||typeof value==='number')return new Date(value)}catch{}return new Date()}
-function displayTime(value){return getTimestamp(value).toLocaleTimeString('fa-IR',{hour:'2-digit',minute:'2-digit'})}
-function badLanguage(text){const normalized=String(text).toLowerCase().replace(/[ي]/g,'ی').replace(/[ك]/g,'ک').replace(/[ۀة]/g,'ه').replace(/[ـ\sـ.،!؟*_\-]/g,'');const blocked=['احمق','بی‌شعور','بیشعور','کثافت','عوضی','حرومزاده','حرامزاده','گمشو','خفه‌شو','خفهشو','بی‌ناموس','بیناموس'];return blocked.some(word=>normalized.includes(word.replace(/[\s‌]/g,'')))}
-function profanityCheck(text){if(badLanguage(text)){showToast('لطفاً از الفاظ توهین‌آمیز استفاده نکنید.');return false}return true}
-function showNotification(title,body){if(userPrefs.notifications&&'Notification'in window&&Notification.permission==='granted'&&document.hidden){try{new Notification(title,{body,icon:'https://limochat.pages.dev/favicon.ico'})}catch{}}}
-function createAvatar(target,value){if(value&&/^https?:\/\//i.test(value)){const img=document.createElement('img');img.src=value;img.alt='';target.replaceChildren(img)}else target.textContent=(value||'ل').slice(0,2)}
-function renderProfile(){if(!currentUserData)return;$('settings-name').textContent=currentUserData.displayName||'کاربر لیمو';$('settings-username').textContent='@'+(currentUserData.username||'user');createAvatar($('settings-avatar'),currentUserData.avatar||currentUserData.displayName||'ل')}
-function openAuth(){navigateTo('auth')}
 
-window.handleAuth=async()=>{const username=normalizeUsername($('auth-username').value),password=$('auth-password').value,button=$('auth-submit');if(!/^[a-z0-9_.]{3,24}$/.test(username)){showToast('آیدی باید ۳ تا ۲۴ حرف انگلیسی، عدد یا _ و . باشد');return}if(password.length<6){showToast('رمز عبور باید حداقل ۶ کاراکتر باشد');return}button.disabled=true;button.textContent='در حال اتصال...';try{if(isLoginMode){await signInWithEmailAndPassword(auth,userEmail(username),password)}else{const existing=await getDocs(query(collection(db,'users'),where('username','==',username)));if(!existing.empty)throw new Error('USERNAME_TAKEN');const credential=await createUserWithEmailAndPassword(auth,userEmail(username),password);await setDoc(doc(db,'users',credential.user.uid),{uid:credential.user.uid,username,displayName:username,bio:'من از لیمو چت استفاده می‌کنم',avatar:null,createdAt:serverTimestamp(),blockedUsers:[]})}}catch(error){console.error('Auth:',error);if(error.message==='USERNAME_TAKEN')showToast('این آیدی قبلاً انتخاب شده است');else if(['auth/user-not-found','auth/wrong-password','auth/invalid-credential'].includes(error.code))showToast('آیدی یا رمز عبور اشتباه است');else if(error.code==='auth/email-already-in-use')showToast('این آیدی قبلاً ثبت شده است');else if(error.code==='auth/too-many-requests')showToast('تلاش‌های زیاد؛ کمی بعد دوباره امتحان کنید');else showToast('ورود انجام نشد: '+(error.message||error.code||'خطای نامشخص'))}finally{button.disabled=false;button.textContent=isLoginMode?'ورود':'ساخت حساب'}};
-window.loginWithGoogle=async()=>{try{const provider=new GoogleAuthProvider();provider.setCustomParameters({prompt:'select_account'});await signInWithPopup(auth,provider)}catch(error){console.error(error);if(error.code==='auth/unauthorized-domain')showToast('دامنه سایت در Firebase مجاز نشده است');else if(error.code==='auth/operation-not-allowed')showToast('ورود Google در Firebase فعال نشده است');else showToast('ورود گوگل انجام نشد: '+(error.message||''))}};
-window.logout=async()=>{if(confirm('از حساب کاربری خارج می‌شوید؟')){try{if(unsubscribeMessages)unsubscribeMessages();if(unsubscribeChats)unsubscribeChats();await signOut(auth)}catch(e){showToast('خروج انجام نشد')}}};
-async function ensureGoogleProfile(user){const profileRef=doc(db,'users',user.uid),snap=await getDoc(profileRef);if(snap.exists())return snap.data();let base=normalizeUsername((user.email||'user').split('@')[0]).replace(/[^a-z0-9_.]/g,'').slice(0,16)||'user';let username=base;const q=await getDocs(query(collection(db,'users'),where('username','==',username)));if(!q.empty)username=(base.slice(0,13)+'_'+user.uid.slice(-5)).slice(0,24);const data={uid:user.uid,username,displayName:user.displayName||base,bio:'من از لیمو چت استفاده می‌کنم',avatar:user.photoURL||null,createdAt:serverTimestamp(),blockedUsers:[]};await setDoc(profileRef,data);return data}
-onAuthStateChanged(auth,async user=>{if(user){try{let snap=await getDoc(doc(db,'users',user.uid));currentUserData=snap.exists()?snap.data():await ensureGoogleProfile(user);if(!currentUserData.username){currentUserData={...currentUserData,username:(user.email||'user').split('@')[0]};await updateDoc(doc(db,'users',user.uid),{username:currentUserData.username})}blockedUsers=Array.isArray(currentUserData.blockedUsers)?currentUserData.blockedUsers:[];loadPrefs();renderProfile();navigateTo('main');loadChatList();watchIncomingCalls();$('auth-submit').disabled=false}catch(error){console.error(error);showToast('دریافت اطلاعات حساب ناموفق بود؛ مجوز users را بررسی کنید');openAuth()}}else{currentUserData=null;if(unsubscribeChats)unsubscribeChats();if(incomingCallUnsub)incomingCallUnsub();openAuth()}});
+window.navigateTo = name => {
+  document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+  document.getElementById(`screen-${name}`)?.classList.add('active');
+  const hideNav = ['splash', 'auth', 'chat-room'].includes(name) || !currentUserData;
+  $('bottom-nav')?.classList.toggle('hidden', hideNav);
+  $('bottom-nav')?.setAttribute('aria-hidden', hideNav ? 'true' : 'false');
+};
+window.switchTab = (name, element) => {
+  if (!currentUserData) return openAuth();
+  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+  const index = { main: 0, calls: 1, settings: 2 }[name];
+  (element || document.querySelectorAll('.nav-item')[index])?.classList.add('active');
+  navigateTo(name);
+  if (name === 'calls') window.refreshCalls();
+};
+window.toggleAuthMode = () => {
+  isLoginMode = !isLoginMode;
+  $('auth-title').textContent = isLoginMode ? 'ورود به لیمو چت' : 'ساخت حساب جدید';
+  $('auth-sub').textContent = isLoginMode ? 'با آیدی و رمز عبور یا حساب گوگل وارد شوید.' : 'یک آیدی و رمز عبور امن انتخاب کنید.';
+  $('auth-submit').textContent = isLoginMode ? 'ورود' : 'ساخت حساب';
+  $('auth-switch-text').innerHTML = isLoginMode ? 'حساب ندارید؟ <b>ثبت‌نام کنید</b>' : 'حساب دارید؟ <b>وارد شوید</b>';
+  $('auth-password').autocomplete = isLoginMode ? 'current-password' : 'new-password';
+};
+window.openSubMenu = key => { if (!currentUserData) return openAuth(); window.renderSubMenu(key); $('submenu').classList.add('active'); };
+window.closeSubMenu = () => $('submenu').classList.remove('active');
+window.closeActionMenu = () => $('action-overlay').classList.remove('show');
+function openAuth() { window.navigateTo('auth'); }
+function getTimestamp(value) { const date = value ? new Date(value) : new Date(); return Number.isNaN(date.getTime()) ? new Date() : date; }
+function displayTime(value) { return getTimestamp(value).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }); }
+function formatBytes(bytes) { return bytes < 1024 * 1024 ? `${Math.round(bytes / 1024)} KB` : `${(bytes / 1024 / 1024).toFixed(2)} MB`; }
+function badLanguage(text) {
+  const normalized = String(text).toLowerCase().replace(/[ي]/g,'ی').replace(/[ك]/g,'ک').replace(/[ۀة]/g,'ه').replace(/[ـ\sـ.،!؟*_\-]/g,'');
+  const blocked = ['احمق','بی‌شعور','بیشعور','کثافت','عوضی','حرومزاده','حرامزاده','گمشو','خفه‌شو','خفهشو','بی‌ناموس','بیناموس'];
+  return blocked.some(word => normalized.includes(word.replace(/[\s‌]/g,'')));
+}
+function profanityCheck(text) { if (badLanguage(text)) { showToast('لطفاً از الفاظ توهین‌آمیز استفاده نکنید.'); return false; } return true; }
+function showNotification(title, body) {
+  if (userPrefs.notifications && 'Notification' in window && Notification.permission === 'granted' && document.hidden) {
+    try { new Notification(title, { body, icon: 'https://limochat.pages.dev/favicon.ico' }); } catch {}
+  }
+}
+function createAvatar(target, value) {
+  if (value && /^https?:\/\//i.test(value)) {
+    const img = document.createElement('img'); img.src = value; img.alt = ''; target.replaceChildren(img);
+  } else target.textContent = (value || 'ل').slice(0, 2);
+}
+function renderProfile() {
+  if (!currentUserData) return;
+  $('settings-name').textContent = currentUserData.displayName || 'کاربر لیمو';
+  $('settings-username').textContent = '@' + (currentUserData.username || 'user');
+  createAvatar($('settings-avatar'), currentUserData.avatar || currentUserData.displayName || 'ل');
+}
+function mapProfile(row) {
+  return { uid: row.id, username: row.username, displayName: row.display_name || row.username, bio: row.bio || '', avatar: row.avatar_url || null };
+}
+function mapMessage(row) {
+  return {
+    id: row.id, chatId: row.chat_id, senderId: row.sender_id, senderName: row.sender_name,
+    text: row.text || '', imagePath: row.image_path || null, imageName: row.image_name || '', imageSize: row.image_size || 0,
+    replyTo: row.reply_to || null, reactions: row.reactions || {}, status: row.status || 'sent',
+    edited: !!row.edited, createdAt: row.created_at
+  };
+}
+function messageTable() { return currentChatType === 'global' ? 'global_messages' : 'messages'; }
+async function cacheCurrentPrefs() {
+  localStorage.setItem(prefsKey(), JSON.stringify(userPrefs));
+  if (currentUserData) {
+    const { error } = await supabase.from('user_settings').upsert({ user_id: currentUserData.uid, preferences: userPrefs, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    if (error) throw error;
+  }
+}
+async function loadPrefs() {
+  try { userPrefs = { ...userPrefs, ...JSON.parse(localStorage.getItem(prefsKey()) || '{}') }; } catch {}
+  if (currentUserData) {
+    const { data, error } = await supabase.from('user_settings').select('preferences').eq('user_id', currentUserData.uid).maybeSingle();
+    if (!error && data?.preferences) userPrefs = { ...userPrefs, ...data.preferences };
+  }
+  if (userPrefs.theme) document.documentElement.dataset.theme = userPrefs.theme;
+  if (userPrefs.primary) document.documentElement.style.setProperty('--primary', userPrefs.primary);
+  localStorage.setItem(prefsKey(), JSON.stringify(userPrefs));
+}
+async function loadChatStates() {
+  const pins = new Set(); const hidden = new Set();
+  const { data, error } = await supabase.from('chat_states').select('chat_key,pinned,hidden').eq('user_id', currentUserData.uid);
+  if (error) { console.warn('Chat states:', error.message); return; }
+  (data || []).forEach(row => { if (row.pinned) pins.add(row.chat_key); if (row.hidden) hidden.add(row.chat_key); });
+  saveSet(pinKey(), pins); saveSet(hiddenKey(), hidden);
+}
+async function saveChatState(chatKey, pinned, hidden) {
+  const { error } = await supabase.from('chat_states').upsert({ user_id: currentUserData.uid, chat_key: String(chatKey), pinned, hidden, updated_at: new Date().toISOString() }, { onConflict: 'user_id,chat_key' });
+  if (error) { console.error(error); showToast('ذخیره وضعیت گفتگو ناموفق بود'); }
+}
+async function loadBlockedUsers() {
+  const { data, error } = await supabase.from('user_blocks').select('blocked_user_id').eq('user_id', currentUserData.uid);
+  if (error) { console.warn('Blocked users:', error.message); blockedUsers = []; return; }
+  blockedUsers = (data || []).map(row => row.blocked_user_id);
+}
+function removeChannel(channel) { if (channel) supabase.removeChannel(channel).catch(error => console.warn(error)); }
 
-function loadChatList(){if(!currentUserData)return;const container=$('chat-list');if(unsubscribeChats)unsubscribeChats();const q=query(collection(db,'chats'),where('participants','array-contains',currentUserData.uid));unsubscribeChats=onSnapshot(q,snapshot=>{const chats=[];snapshot.forEach(ds=>chats.push({id:ds.id,...ds.data()}));renderChatList(chats)},error=>{console.error(error);showToast('دریافت گفتگوها ناموفق بود؛ دسترسی chats را بررسی کنید')});}
-function renderChatList(chats=[]){const container=$('chat-list');container.replaceChildren();const pinned=getSet(pinKey()),hidden=getSet(hiddenKey());const bot=makeChatRow({id:'bot',name:'لیمو بات',avatar:'🤖',lastMessage:'دستیار هوشمند داخل برنامه',type:'bot'});container.appendChild(bot);const global=makeChatRow({id:'global',name:'گفتگوی عمومی',avatar:'🌍',lastMessage:'گفتگوی جمعی لیمو چت',type:'global'});container.appendChild(global);chats.filter(c=>!hidden.has(c.id)).sort((a,b)=>(pinned.has(b.id)?1:0)-(pinned.has(a.id)?1:0)).forEach(chat=>{if((chat.participants||[]).some(uid=>isBlocked(uid)&&uid!==currentUserData.uid))return;const other=(chat.participants||[]).find(uid=>uid!==currentUserData.uid)||'';const row=makeChatRow({id:chat.id,name:chat.name||'گفتگو',avatar:chat.avatar||chat.name?.[0]||'ل',lastMessage:chat.lastMessage||'شروع مکالمه...',participants:chat.participants||[],otherUid:other,type:'private'});container.appendChild(row)});if(container.children.length===2){const hint=document.createElement('div');hint.className='empty-state';hint.innerHTML='<i class="fa-regular fa-comments"></i><p>هنوز گفتگوی خصوصی ندارید.<br>با جستجوی آیدی دوستانتان را پیدا کنید.</p>';container.appendChild(hint)}}
-function makeChatRow(info){const row=document.createElement('div');row.className='chat-row';row.dataset.chatId=info.id;const avatar=document.createElement('div');avatar.className='avatar';if(info.avatar&&/^https?:\/\//.test(info.avatar))createAvatar(avatar,info.avatar);else avatar.textContent=info.avatar||'ل';const body=document.createElement('div');body.className='chat-details';const top=document.createElement('div');top.className='chat-topline';const name=document.createElement('span');name.className='chat-name';name.textContent=info.name;const time=document.createElement('small');time.className='chat-time';const bottom=document.createElement('div');bottom.className='chat-bottomline';const preview=document.createElement('span');preview.className='chat-preview';preview.textContent=info.lastMessage||'';const pinned=getSet(pinKey()).has(info.id);if(pinned){const pin=document.createElement('i');pin.className='fa-solid fa-thumbtack pin-mark';name.prepend(pin)}top.append(name,time);bottom.append(preview);body.append(top,bottom);row.append(avatar,body);row.addEventListener('click',()=>openChatRoom(info.id,info.name,info.avatar,info.participants||[],info.type));let pressTimer=null,longPressed=false;row.addEventListener('touchstart',()=>{longPressed=false;pressTimer=setTimeout(()=>{longPressed=true;openChatContext(info)},550)},{passive:true});row.addEventListener('touchend',()=>clearTimeout(pressTimer));row.addEventListener('touchmove',()=>clearTimeout(pressTimer));row.addEventListener('contextmenu',e=>{e.preventDefault();openChatContext(info)});row.addEventListener('click',e=>{if(longPressed){e.stopImmediatePropagation();longPressed=false}},{capture:true});return row}
-window.openChatRoom=async(id,name,avatar,participants=[],type=null)=>{if(id!=='global'&&id!=='bot'&&type!=='bot'&&participants.length===0){try{const snap=await getDoc(doc(db,'chats',id));if(snap.exists())participants=snap.data().participants||[]}catch{}}currentChatId=id;currentChatType=type||(id==='global'?'global':id==='bot'?'bot':'private');currentChatName=name||'گفتگو';currentChatAvatar=avatar||'ل';currentChatParticipants=participants;createAvatar($('room-avatar'),currentChatAvatar);$('room-name').textContent=currentChatName;$('room-status').textContent=currentChatType==='bot'?'دستیار داخل برنامه':currentChatType==='global'?'گفتگوی عمومی':(userPrefs.showOnline?'گفتگوی خصوصی':'وضعیت مخفی');$('call-button').style.display=currentChatType==='private'?'grid':'none';replyTarget=null;$('reply-preview').classList.remove('show');navigateTo('chat-room');if(currentChatType==='bot'){loadBotMessages();return}loadMessages(id)};
-window.closeChatRoom=()=>{if(unsubscribeMessages){unsubscribeMessages();unsubscribeMessages=null}currentChatId=null;replyTarget=null;navigateTo('main')};
-function loadMessages(chatId){const container=$('messages');container.replaceChildren();if(unsubscribeMessages)unsubscribeMessages();let firstSnapshot=true;const q=query(messagesRef(chatId),orderBy('createdAt','asc'));unsubscribeMessages=onSnapshot(q,snapshot=>{if(!firstSnapshot){snapshot.docChanges().forEach(change=>{if(change.type==='added'){const incoming=change.doc.data();if(incoming.senderId!==currentUserData.uid&&!isBlocked(incoming.senderId))showNotification(incoming.senderName||'پیام جدید',incoming.text||'یک تصویر برای شما ارسال شد')}})}firstSnapshot=false;container.replaceChildren();if(snapshot.empty){const empty=document.createElement('div');empty.className='empty-state';empty.textContent='هنوز پیامی وجود ندارد. اولین پیام را بفرستید.';container.appendChild(empty);return}snapshot.forEach(ds=>{const msg={...ds.data(),id:ds.id};if(msg.senderId!==currentUserData.uid&&isBlocked(msg.senderId))return;renderMessage(msg)});container.scrollTop=container.scrollHeight;if(userPrefs.readReceipts){snapshot.forEach(ds=>{const m=ds.data();if(m.senderId!==currentUserData.uid&&m.status!=='read')updateDoc(messageRef(ds.id,chatId),{status:'read'}).catch(()=>{})})}},error=>{console.error(error);showToast('دریافت پیام‌ها ناموفق بود')})}
-function renderMessage(msg){const container=$('messages'),isMe=msg.senderId===currentUserData.uid,wrap=document.createElement('div');wrap.className='msg-wrap '+(isMe?'me':'them');const bubble=document.createElement('div');bubble.className='message';if(currentChatType==='global'&&!isMe){const sender=document.createElement('div');sender.className='sender';sender.textContent=msg.senderName||'کاربر';bubble.appendChild(sender)}if(msg.replyTo?.text){const quote=document.createElement('div');quote.className='reply-quote';quote.textContent='پاسخ به: '+msg.replyTo.text.slice(0,100);bubble.appendChild(quote)}if(msg.imageUrl){const img=document.createElement('img');img.className='msg-image';img.src=msg.imageUrl;img.alt=msg.imageName||'تصویر ارسال‌شده';img.loading='lazy';img.addEventListener('click',e=>{e.stopPropagation();window.open(msg.imageUrl,'_blank','noopener')});bubble.appendChild(img)}if(msg.text){const text=document.createElement('div');text.className='msg-text';text.textContent=msg.text;bubble.appendChild(text)}const meta=document.createElement('div');meta.className='msg-meta';const time=document.createElement('span');time.textContent=displayTime(msg.createdAt);meta.appendChild(time);if(msg.edited){const edited=document.createElement('span');edited.className='edited';edited.textContent='ویرایش‌شده';meta.appendChild(edited)}if(isMe){const ticks=document.createElement('span');ticks.className='ticks';ticks.textContent=msg.status==='read'?'✓✓':msg.status==='delivered'?'✓✓':'✓';meta.appendChild(ticks)}bubble.appendChild(meta);bubble.addEventListener('click',()=>openMessageActions(msg));bubble.addEventListener('contextmenu',e=>{e.preventDefault();openMessageActions(msg)});wrap.appendChild(bubble);if(msg.reactions&&Object.keys(msg.reactions).length){const reactions=document.createElement('div');reactions.className='reactions';Object.entries(msg.reactions).forEach(([uid,emoji])=>{const chip=document.createElement('span');chip.className='reaction';chip.textContent=emoji;reactions.appendChild(chip)});wrap.appendChild(reactions)}container.appendChild(wrap)}
-window.sendMessage=async()=>{const input=$('message-input'),text=input.value.trim();if(!text||!currentChatId)return;if(!profanityCheck(text))return;if(currentChatType==='private'){const other=currentChatParticipants.find(uid=>uid!==currentUserData.uid);if(other&&isBlocked(other)){showToast('این کاربر را مسدود کرده‌اید');return}}input.value='';if(currentChatType==='bot'){await addBotMessage(text,true);return}const anonymous=userPrefs.anonymous;const msgData={text,senderId:currentUserData.uid,senderName:anonymous?'کاربر ناشناس':currentUserData.displayName,createdAt:serverTimestamp(),status:'sent'};if(replyTarget)msgData.replyTo={id:replyTarget.id,text:replyTarget.text||'تصویر'};try{await addDoc(messagesRef(),msgData);if(currentChatType==='private')await updateDoc(doc(db,'chats',currentChatId),{lastMessage:text.slice(0,120),updatedAt:serverTimestamp()});clearReply()}catch(error){console.error(error);input.value=text;showToast('ارسال پیام ناموفق بود؛ اتصال و مجوزهای Firestore را بررسی کنید')}};
-window.openMessageActions=(msg)=>{activeMessage=msg;const items=[['fa-face-smile','ثبت واکنش',reactToMessage],['fa-reply','پاسخ به پیام',replyToMessage],['fa-copy','کپی متن',copyActiveMessage]];if(msg.senderId===currentUserData.uid){items.push(['fa-pen','ویرایش پیام',editActiveMessage],['fa-trash','حذف پیام',deleteActiveMessage])}else{items.push(['fa-flag','گزارش پیام',()=>reportMessage(msg)])}showActionSheet('گزینه‌های پیام',items)};
-function showActionSheet(title,items){$('action-title').textContent=title;const root=$('action-items');root.replaceChildren();items.forEach(([icon,label,fn])=>{const row=document.createElement('div');row.className='action-row'+(label.includes('حذف')||label.includes('گزارش')?' danger':'');const i=document.createElement('i');i.className='fa-solid '+icon;const span=document.createElement('span');span.textContent=label;row.append(i,span);row.onclick=()=>{closeActionMenu();fn()};root.appendChild(row)});$('action-overlay').classList.add('show')}
-window.copyActiveMessage=async()=>{if(!activeMessage?.text)return showToast('این پیام متن ندارد');try{await navigator.clipboard.writeText(activeMessage.text);showToast('متن کپی شد')}catch{showToast('دسترسی کپی فعال نیست')}};
-window.replyToMessage=()=>{if(!activeMessage)return;replyTarget=activeMessage;$('reply-preview-text').textContent='پاسخ به: '+(activeMessage.text||'تصویر');$('reply-preview').classList.add('show');$('message-input').focus()};window.clearReply=()=>{replyTarget=null;$('reply-preview').classList.remove('show')};
-window.editActiveMessage=async()=>{if(!activeMessage||activeMessage.senderId!==currentUserData.uid||!activeMessage.text)return;const value=prompt('متن ویرایش‌شده را وارد کنید:',activeMessage.text);if(value===null||!value.trim())return;if(!profanityCheck(value))return;try{await updateDoc(messageRef(activeMessage.id),{text:value.trim(),edited:true,editedAt:serverTimestamp()});showToast('پیام ویرایش شد')}catch(e){showToast('ویرایش پیام ناموفق بود')}};
-window.deleteActiveMessage=async()=>{if(!activeMessage||activeMessage.senderId!==currentUserData.uid)return;if(!confirm('این پیام برای همه حذف شود؟'))return;try{await deleteDoc(messageRef(activeMessage.id));showToast('پیام حذف شد')}catch(e){showToast('حذف پیام ناموفق بود')}};
-window.reactToMessage=async()=>{if(!activeMessage)return;const choice=prompt('یک واکنش انتخاب کنید: ❤️ 😂 👍 😮 😢 🔥','❤️');if(!choice)return;const allowed=['❤️','😂','👍','😮','😢','🔥','👏','🙏'];if(!allowed.includes(choice.trim()))return showToast('واکنش انتخاب‌شده پشتیبانی نمی‌شود');try{await updateDoc(messageRef(activeMessage.id),{[`reactions.${currentUserData.uid}`]:choice.trim()});showToast('واکنش ثبت شد')}catch(e){showToast('ثبت واکنش ناموفق بود')}};
-window.reportMessage=async(msg)=>{const reason=prompt('دلیل گزارش این پیام را بنویسید:','محتوای نامناسب');if(!reason)return;await submitReport({type:'message',targetUid:msg.senderId,targetName:msg.senderName,messageId:msg.id,chatId:currentChatId,reason,content:msg.text||''})};
-window.openChatActions=()=>{if(!currentChatId)return;const other=currentChatParticipants.find(uid=>uid!==currentUserData.uid);const items=[];if(currentChatType==='private'&&other){items.push(['fa-flag','گزارش کاربر',()=>reportUser(other,currentChatName)]);items.push(['fa-ban','مسدود کردن کاربر',()=>blockUser(other,currentChatName)])}items.push(['fa-thumbtack','پین / برداشتن پین گفتگو',()=>togglePin({id:currentChatId,name:currentChatName,type:currentChatType})]);showActionSheet('گزینه‌های گفتگو',items)};
-window.openChatContext=(info)=>{activeChatInfo=info;const hidden=getSet(hiddenKey());const pinned=getSet(pinKey());const items=[['fa-thumbtack',pinned.has(info.id)?'برداشتن پین':'پین کردن گفتگو',()=>togglePin(info)]];if(info.type==='private'&&info.otherUid){items.push(['fa-flag','گزارش کاربر',()=>reportUser(info.otherUid,info.name)],['fa-ban','مسدود کردن کاربر',()=>blockUser(info.otherUid,info.name)])}if(info.id!=='global'&&info.id!=='bot')items.push(['fa-trash','حذف گفتگو از فهرست من',()=>{hidden.add(info.id);saveSet(hiddenKey(),hidden);loadChatList();showToast('گفتگو از فهرست شما پنهان شد')}]);showActionSheet('مدیریت گفتگو: '+info.name,items)};
-window.togglePin=(info)=>{const pins=getSet(pinKey());if(pins.has(info.id)){pins.delete(info.id);showToast('پین گفتگو برداشته شد')}else{pins.add(info.id);showToast('گفتگو پین شد')}saveSet(pinKey(),pins);loadChatList()};
-window.startPrivateChat=async(otherUid,otherName,otherAvatar=null)=>{if(isBlocked(otherUid))return showToast('این کاربر در فهرست مسدودشده‌هاست');try{const q=query(collection(db,'chats'),where('participants','array-contains',currentUserData.uid));const snap=await getDocs(q);let found=null;snap.forEach(ds=>{const data=ds.data();if((data.participants||[]).includes(otherUid))found={id:ds.id,...data}});if(found){closeSubMenu();openChatRoom(found.id,found.name||otherName,found.avatar||otherAvatar||otherName?.[0],found.participants,'private')}else{const chatRef=doc(collection(db,'chats'));const participants=[currentUserData.uid,otherUid];await setDoc(chatRef,{participants,name:otherName||'گفتگوی خصوصی',avatar:otherAvatar||null,lastMessage:'',createdAt:serverTimestamp(),updatedAt:serverTimestamp()});closeSubMenu();openChatRoom(chatRef.id,otherName||'گفتگوی خصوصی',otherAvatar||otherName?.[0]||'ل',participants,'private')}}catch(error){console.error(error);showToast('ساخت گفتگو ناموفق بود؛ مجوز chats را بررسی کنید')}};
-window.searchUser=async()=>{const username=normalizeUsername($('search-username').value),root=$('search-results');if(!username)return;root.textContent='در حال جستجو...';try{const snap=await getDocs(query(collection(db,'users'),where('username','==',username)));root.replaceChildren();if(snap.empty){root.textContent='کاربری با این آیدی پیدا نشد.';return}snap.forEach(ds=>{const user=ds.data();if(user.uid===currentUserData.uid){root.textContent='این آیدی متعلق به خود شماست.';return}if(isBlocked(user.uid)){root.textContent='این کاربر را مسدود کرده‌اید.';return}const card=document.createElement('div');card.className='result-card';const av=document.createElement('div');av.className='avatar';createAvatar(av,user.avatar||user.displayName);const info=document.createElement('div');info.className='result-info';const name=document.createElement('b');name.textContent=user.displayName||user.username;const id=document.createElement('small');id.textContent='@'+user.username;info.append(name,id);const button=document.createElement('button');button.className='btn';button.textContent='پیام';button.onclick=()=>startPrivateChat(user.uid,user.displayName||user.username,user.avatar);card.append(av,info,button);root.appendChild(card)})}catch(error){console.error(error);root.textContent='جستجو ناموفق بود؛ دسترسی خواندن users را بررسی کنید.'}};
+// راه‌اندازی اولیه: منوی پایین تا تأیید نشست کاربر مخفی می‌ماند.
+$('bottom-nav').classList.add('hidden');
+$('bottom-nav').setAttribute('aria-hidden', 'true');
+window.navigateTo('splash');
+function finishBootstrap(session) {
+  if (!bootstrapPending) return;
+  bootstrapPending = false;
+  clearTimeout(bootstrapTimer);
+  const remaining = Math.max(0, 650 - (Date.now() - splashStartedAt));
+  setTimeout(() => { void applySession(session).catch(error => { console.error('Initial session restore failed:', error); showToast('بازیابی نشست ناموفق بود؛ صفحه را دوباره بارگذاری کنید.'); openAuth(); }); }, remaining);
+}
+bootstrapTimer = setTimeout(() => {
+  if (bootstrapPending) { bootstrapPending = false; openAuth(); }
+}, 6500);
 
-// عکس: فشرده‌سازی در مرورگر، سپس بارگذاری فایل در Firebase Storage
-window.chooseImage=async(event)=>{const file=event.target.files?.[0];event.target.value='';if(!file)return;if(!file.type.startsWith('image/'))return showToast('فقط فایل تصویری مجاز است');if(file.size>15*1024*1024)return showToast('حجم فایل اولیه نباید بیش از ۱۵ مگابایت باشد');if(currentChatType==='bot')return showToast('ارسال تصویر به لیمو بات در این نسخه فعال نیست');try{const blob=await compressImage(file,0.8);preparedImage={file,blob,name:file.name||'image.jpg'};$('image-preview-img').src=URL.createObjectURL(blob);$('image-quality').value=80;$('quality-label').textContent='۸۰٪';$('image-size-label').textContent=formatBytes(blob.size)+' از حداکثر ۲ مگابایت';$('send-image-button').disabled=blob.size>2*1024*1024;$('image-preview').classList.add('show')}catch(e){console.error(e);showToast('خواندن یا فشرده‌سازی تصویر ناموفق بود')}};
-function compressImage(file,quality){return new Promise((resolve,reject)=>{const img=new Image(),url=URL.createObjectURL(file);img.onload=async()=>{try{const canvas=document.createElement('canvas');let scale=Math.min(1,2000/Math.max(img.width,img.height));canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale);const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,canvas.width,canvas.height);let q=quality,blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',q));while(blob&&blob.size>2*1024*1024&&q>0.36){q-=.08;blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',q))}while(blob&&blob.size>2*1024*1024&&canvas.width>500){canvas.width=Math.round(canvas.width*.82);canvas.height=Math.round(canvas.height*.82);ctx.drawImage(img,0,0,canvas.width,canvas.height);blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',Math.max(.35,q)))}URL.revokeObjectURL(url);if(!blob)reject(new Error('Compression failed'));else resolve(blob)}catch(e){URL.revokeObjectURL(url);reject(e)}};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('Image load failed'))};img.src=url})}
-function formatBytes(bytes){return bytes<1024*1024?Math.round(bytes/1024)+' KB':(bytes/1024/1024).toFixed(2)+' MB'}
-window.updateImageQuality=async(value)=>{if(!preparedImage)return;$('quality-label').textContent=Number(value).toLocaleString('fa-IR')+'٪';try{const blob=await compressImage(preparedImage.file,Number(value)/100);preparedImage.blob=blob;$('image-size-label').textContent=formatBytes(blob.size)+' از حداکثر ۲ مگابایت';$('send-image-button').disabled=blob.size>2*1024*1024;$('image-preview-img').src=URL.createObjectURL(blob)}catch{showToast('تغییر کیفیت تصویر ناموفق بود')}};
-window.cancelImage=()=>{preparedImage=null;$('image-preview').classList.remove('show')};
-window.sendPreparedImage=async()=>{if(!preparedImage||!currentChatId)return;if(preparedImage.blob.size>2*1024*1024)return showToast('تصویر باید حداکثر ۲ مگابایت باشد');const button=$('send-image-button');button.disabled=true;button.textContent='در حال بارگذاری...';try{const safeChat=currentChatId.replace(/[^a-zA-Z0-9_-]/g,'_');const path=`chat-media/${safeChat}/${currentUserData.uid}/${Date.now()}.jpg`;const fileRef=storageRef(storage,path);await uploadBytes(fileRef,preparedImage.blob,{contentType:'image/jpeg'});const url=await getDownloadURL(fileRef);const msg={senderId:currentUserData.uid,senderName:userPrefs.anonymous?'کاربر ناشناس':currentUserData.displayName,imageUrl:url,imageName:preparedImage.name,imageSize:preparedImage.blob.size,text:'',createdAt:serverTimestamp(),status:'sent'};if(replyTarget)msg.replyTo={id:replyTarget.id,text:replyTarget.text||'تصویر'};await addDoc(messagesRef(),msg);if(currentChatType==='private')await updateDoc(doc(db,'chats',currentChatId),{lastMessage:'📷 تصویر',updatedAt:serverTimestamp()});cancelImage();clearReply();showToast('تصویر ارسال شد')}catch(error){console.error(error);showToast('بارگذاری عکس ناموفق بود؛ Firebase Storage و قوانین آن را بررسی کنید')}finally{button.disabled=false;button.textContent='ارسال تصویر'}};
+let sessionInitUid = null;
+let sessionInitPromise = null;
 
-// منوی تنظیمات و تمام زیرصفحه‌ها
-window.renderSubMenu=(key)=>{const title=$('submenu-title'),body=$('submenu-body');body.replaceChildren();let html='';if(key==='account'){title.textContent='حساب کاربری';html=`<div class="setting-card"><h3>اطلاعات نمایه</h3><label>نام نمایشی</label><input class="plain-input" id="profile-name" value="${safe(currentUserData.displayName||'')}" maxlength="40"><label>بیوگرافی</label><input class="plain-input" id="profile-bio" value="${safe(currentUserData.bio||'')}" maxlength="120"><button class="btn full" onclick="saveProfile()">ذخیره نمایه</button></div><div class="setting-card"><h3>تغییر آیدی</h3><p>آیدی باید یکتا باشد. در حساب‌هایی که با رمز عبور ساخته شده‌اند، برای هماهنگ ماندن ورود، رمز فعلی لازم است.</p><label>آیدی جدید</label><input class="plain-input" id="new-username" dir="ltr" value="${safe(currentUserData.username||'')}" maxlength="24"><label>رمز فعلی (برای حساب رمزدار)</label><input class="plain-input" id="username-current-pass" type="password" placeholder="در صورت داشتن رمز عبور"><button class="btn full" onclick="changeUsername()">تغییر آیدی</button></div><div class="setting-card"><h3>تنظیم یا تغییر رمز عبور</h3><p>در حساب Google می‌توانید یک روش ورود با آیدی و رمز نیز به حساب متصل کنید. برای حساب رمزدار، رمز فعلی باید تأیید شود.</p><label>رمز فعلی (در صورت وجود)</label><input class="plain-input" id="old-password" type="password"><label>رمز جدید</label><input class="plain-input" id="new-password" type="password"><label>تکرار رمز جدید</label><input class="plain-input" id="confirm-password" type="password"><button class="btn full" onclick="changePassword()">ذخیره رمز عبور</button></div>`}
-else if(key==='privacy'){title.textContent='حریم خصوصی و چت ایمن';html=`<div class="setting-card"><h3>نمایش و حریم خصوصی</h3><div class="setting-line"><span>نمایش نام من به‌صورت ناشناس در پیام‌های جدید</span><input class="switch" type="checkbox" id="pref-anonymous" ${userPrefs.anonymous?'checked':''} onchange="setPref('anonymous',this.checked)"></div><div class="setting-line"><span>ارسال رسید خوانده‌شدن پیام‌ها</span><input class="switch" type="checkbox" id="pref-read" ${userPrefs.readReceipts?'checked':''} onchange="setPref('readReceipts',this.checked)"></div><div class="setting-line"><span>نمایش وضعیت آنلاین در گفتگو</span><input class="switch" type="checkbox" id="pref-online" ${userPrefs.showOnline?'checked':''} onchange="setPref('showOnline',this.checked)"></div></div><div class="setting-card"><h3>توضیح امنیت</h3><p>حالت ناشناس فقط نام نمایشی پیام‌های بعدی را پنهان می‌کند؛ شناسهٔ فرستنده همچنان برای عملکرد و مدیریت پیام در Firebase ذخیره می‌شود. این نسخه رمزنگاری سرتاسری (E2EE) ندارد؛ بنابراین آن را گفتگوی ناشناس در برابر مدیر سرویس یا چت کاملاً رمزگذاری‌شده تلقی نکنید. امنیت دسترسی به گفتگوها به قواعد Firestore پروژه نیز وابسته است.</p></div><div class="setting-card"><button class="btn outline full" onclick="openSubMenu('blocked')">مدیریت کاربران مسدودشده</button></div>`}
-else if(key==='theme'){title.textContent='تم و ظاهر';const theme=document.documentElement.dataset.theme||'aero';html=`<div class="setting-card"><h3>انتخاب پوسته</h3><div class="setting-line"><span>مات Aero (پیشنهادی)</span><input type="radio" name="theme" ${theme==='aero'?'checked':''} onchange="setTheme('aero')"></div><div class="setting-line"><span>روشن</span><input type="radio" name="theme" ${theme==='light'?'checked':''} onchange="setTheme('light')"></div><div class="setting-line"><span>تیره</span><input type="radio" name="theme" ${theme==='dark'?'checked':''} onchange="setTheme('dark')"></div></div><div class="setting-card"><h3>رنگ اصلی</h3><input type="color" id="primary-color" value="${localStorage.getItem('limo_primary')||'#91d832'}" style="width:100%;height:48px;border:0;background:transparent" onchange="setPrimaryColor(this.value)"></div>`}
-else if(key==='notifications'){title.textContent='اعلان‌ها';html=`<div class="setting-card"><div class="setting-line"><span>فعال بودن اعلان هنگام دریافت پیام در پس‌زمینه</span><input class="switch" type="checkbox" ${userPrefs.notifications?'checked':''} onchange="toggleNotifications(this.checked)"></div><p>اعلان مرورگر به اجازهٔ سیستم‌عامل و HTTPS نیاز دارد. این تنظیم اعلان وب را فعال می‌کند و جایگزین Push Notification واقعی در زمان بسته بودن کامل مرورگر نیست.</p><button class="btn outline full" onclick="testNotification()">آزمایش اعلان</button></div>`}
-else if(key==='contacts'){title.textContent='مخاطبان و دعوت';html=`<div class="setting-card"><h3>به‌روزرسانی مخاطبان</h3><p>فهرست گفتگوها و کاربران قابل جستجو از Firebase تازه‌سازی می‌شود.</p><button class="btn full" onclick="refreshContacts()"><i class="fa-solid fa-rotate"></i> به‌روزرسانی</button></div><div class="setting-card"><h3>دعوت از دوستان</h3><p>لینک برنامه را برای دوستانتان بفرستید.</p><button class="btn full" onclick="inviteFriends()"><i class="fa-solid fa-share-nodes"></i> ارسال دعوت</button><button class="btn outline full" onclick="copyInvite()">کپی لینک دعوت</button></div><div class="setting-card"><h3>جستجو با آیدی</h3><div class="field"><i class="fa-solid fa-at"></i><input id="search-username" dir="ltr" placeholder="مثلاً ali"></div><button class="btn full" onclick="searchUser()">جستجو</button><div id="search-results"></div></div>`}
-else if(key==='search'){title.textContent='جستجوی کاربر';html=`<div class="setting-card"><div class="field"><i class="fa-solid fa-at"></i><input id="search-username" dir="ltr" placeholder="آیدی کاربر را وارد کنید"></div><button class="btn full" onclick="searchUser()">جستجو</button><div id="search-results"></div></div>`}
-else if(key==='blocked'){title.textContent='کاربران مسدودشده';html=`<div class="setting-card"><p>کاربران مسدودشده در این دستگاه از فهرست گفتگو و پیام‌های دریافتی شما پنهان می‌شوند. جلوگیری سراسری از ارسال پیام به قواعد سمت سرور نیاز دارد.</p><div id="blocked-list"></div></div>`}
-else if(key==='data'){title.textContent='داده‌ها و ذخیره‌سازی';html=`<div class="setting-card"><h3>وضعیت ذخیره‌سازی</h3><p>پیام‌ها و نمایه‌ها در Firebase ذخیره می‌شوند. تنظیمات ظاهری و فهرست چت‌های پین/پنهان در حافظهٔ محلی این مرورگر هستند.</p><button class="btn outline full" onclick="showStorageInfo()">نمایش اطلاعات ذخیره‌سازی</button><button class="btn outline full" onclick="clearLocalPreferences()">بازنشانی تنظیمات محلی</button><div id="storage-info" class="help"></div></div>`}
-else if(key==='about'){title.textContent='درباره لیمو چت';html=`<div class="setting-card" style="text-align:center;padding:26px"><div class="brand-mark"><i class="fa-solid fa-lemon"></i></div><h2>لیمو چت</h2><p>نسخه 1.07</p><p><b>ساخته شده توسط امیرمحمد انصاری جابری</b></p><p>یک پیام‌رسان وب با رابط فارسی و پوسته مات Aero.</p></div>`}
-body.innerHTML=html;if(key==='blocked')renderBlockedList()};
-window.setPref=(key,value)=>{userPrefs[key]=value;savePrefs();showToast('تنظیم ذخیره شد')};window.setTheme=(theme)=>{document.documentElement.dataset.theme=theme;localStorage.setItem('limo_theme',theme);showToast('پوسته تغییر کرد')};window.setPrimaryColor=(color)=>{document.documentElement.style.setProperty('--primary',color);localStorage.setItem('limo_primary',color)};
-window.toggleNotifications=async(enabled)=>{if(enabled){if(!('Notification'in window)){showToast('مرورگر از اعلان پشتیبانی نمی‌کند');return}const permission=await Notification.requestPermission();if(permission!=='granted'){showToast('اجازه اعلان داده نشد');return}}userPrefs.notifications=enabled;savePrefs();showToast(enabled?'اعلان‌ها فعال شد':'اعلان‌ها غیرفعال شد')};window.testNotification=()=>{if(!('Notification'in window)||!userPrefs.notifications||Notification.permission!=='granted')return showToast('ابتدا اعلان را فعال کنید و اجازه مرورگر را بدهید');showNotification('لیمو چت','اعلان آزمایشی فعال است');showToast('در صورت پشتیبانی مرورگر، اعلان نمایش داده می‌شود')};
-window.saveProfile=async()=>{const displayName=$('profile-name').value.trim(),bio=$('profile-bio').value.trim();if(!displayName)return showToast('نام نمایشی نمی‌تواند خالی باشد');try{await updateDoc(doc(db,'users',currentUserData.uid),{displayName,bio});currentUserData.displayName=displayName;currentUserData.bio=bio;renderProfile();closeSubMenu();showToast('نمایه ذخیره شد')}catch(e){showToast('ذخیره نمایه ناموفق بود')}};
-window.changeUsername=async()=>{const newName=normalizeUsername($('new-username').value),oldPass=$('username-current-pass').value;if(!/^[a-z0-9_.]{3,24}$/.test(newName))return showToast('فرمت آیدی معتبر نیست');if(newName===currentUserData.username)return showToast('آیدی تغییری نکرده است');try{const check=await getDocs(query(collection(db,'users'),where('username','==',newName)));if(!check.empty&&check.docs[0].id!==currentUserData.uid)return showToast('این آیدی قبلاً گرفته شده است');const hasPassword=auth.currentUser.providerData.some(p=>p.providerId==='password');if(hasPassword){if(!oldPass)return showToast('برای تغییر آیدی رمز فعلی را وارد کنید');await reauthenticateWithCredential(auth.currentUser,EmailAuthProvider.credential(auth.currentUser.email,oldPass));await updateEmail(auth.currentUser,userEmail(newName))}await updateDoc(doc(db,'users',currentUserData.uid),{username:newName});currentUserData.username=newName;renderProfile();closeSubMenu();showToast('آیدی تغییر کرد')}catch(e){console.error(e);showToast(e.code==='auth/requires-recent-login'?'برای امنیت دوباره وارد حساب شوید':'تغییر آیدی ناموفق بود: '+(e.message||''))}};
-window.changePassword=async()=>{const oldPass=$('old-password').value,newPass=$('new-password').value,confirmPass=$('confirm-password').value;if(newPass.length<6)return showToast('رمز جدید حداقل ۶ کاراکتر باشد');if(newPass!==confirmPass)return showToast('تکرار رمز جدید مطابقت ندارد');try{const hasPassword=auth.currentUser.providerData.some(p=>p.providerId==='password');if(hasPassword){if(!oldPass)return showToast('رمز فعلی را وارد کنید');await reauthenticateWithCredential(auth.currentUser,EmailAuthProvider.credential(auth.currentUser.email,oldPass));await updatePassword(auth.currentUser,newPass)}else{const credential=EmailAuthProvider.credential(userEmail(currentUserData.username),newPass);await linkWithCredential(auth.currentUser,credential)}$('old-password').value='';$('new-password').value='';$('confirm-password').value='';showToast('رمز ورود ذخیره شد')}catch(e){console.error(e);showToast(e.code==='auth/provider-already-linked'?'این حساب از قبل رمز عبور دارد':e.code==='auth/credential-already-in-use'?'این آیدی قبلاً به حساب دیگری متصل است':'ذخیره رمز ناموفق بود: '+(e.message||''))}};
-window.refreshContacts=()=>{if(unsubscribeChats)unsubscribeChats();loadChatList();showToast('فهرست گفتگوها به‌روزرسانی شد')};window.inviteFriends=async()=>{const data={title:'دعوت به لیمو چت',text:'به لیمو چت بپیوندید:',url:'https://limochat.pages.dev/'};try{if(navigator.share)await navigator.share(data);else{await navigator.clipboard.writeText(data.text+' '+data.url);showToast('لینک دعوت کپی شد')}}catch(e){if(e.name!=='AbortError')showToast('ارسال دعوت انجام نشد')}};window.copyInvite=async()=>{try{await navigator.clipboard.writeText('https://limochat.pages.dev/');showToast('لینک دعوت کپی شد')}catch{showToast('کپی لینک در این مرورگر ممکن نیست')}};
-window.renderBlockedList=async()=>{const root=$('blocked-list');if(!root)return;root.replaceChildren();if(!blockedUsers.length){root.textContent='کاربر مسدودشده‌ای ندارید.';return}for(const uid of blockedUsers){let user={displayName:'کاربر',username:uid.slice(0,8)};try{const snap=await getDoc(doc(db,'users',uid));if(snap.exists())user=snap.data()}catch{}const row=document.createElement('div');row.className='result-card';const info=document.createElement('div');info.className='result-info';info.textContent=(user.displayName||'کاربر')+'  @'+(user.username||'');const btn=document.createElement('button');btn.className='btn outline';btn.textContent='رفع مسدودی';btn.onclick=()=>unblockUser(uid);row.append(info,btn);root.appendChild(row)}};
-window.blockUser=async(uid,name='کاربر')=>{if(!uid||uid===currentUserData.uid)return;if(!confirm(`${name} مسدود شود؟`))return;try{if(!blockedUsers.includes(uid))blockedUsers.push(uid);await updateDoc(doc(db,'users',currentUserData.uid),{blockedUsers});showToast('کاربر مسدود شد');if(currentChatParticipants.includes(uid))closeChatRoom();closeSubMenu();loadChatList()}catch(e){console.error(e);showToast('ثبت مسدودی در حساب ناموفق بود')}};window.unblockUser=async(uid)=>{try{blockedUsers=blockedUsers.filter(x=>x!==uid);await updateDoc(doc(db,'users',currentUserData.uid),{blockedUsers});renderBlockedList();loadChatList();showToast('مسدودی برداشته شد')}catch(e){showToast('رفع مسدودی ناموفق بود')}};
-async function submitReport(report){const reason=String(report.reason||'گزارش کاربر').slice(0,500);const record={...report,reason,reporterUid:currentUserData.uid,reporterUsername:currentUserData.username,destination:'@Report',createdAt:serverTimestamp(),status:'new'};const text=`گزارش Limo Chat\nنوع: ${report.type}\nگزارش‌دهنده: @${currentUserData.username}\nکاربر هدف: ${report.targetName||report.targetUid||'نامشخص'}\nدلیل: ${reason}\nمحتوا: ${(report.content||'').slice(0,500)}\nشناسه گفتگو: ${report.chatId||'-'}`;const telegramUrl='https://t.me/share/url?url='+encodeURIComponent('https://limochat.pages.dev/')+'&text='+encodeURIComponent(text);let telegramWindow=null;try{telegramWindow=window.open('about:blank','_blank')}catch{}try{await addDoc(collection(db,'reports'),record);showToast('گزارش در Firebase ثبت شد')}catch(e){console.error(e);showToast('ثبت گزارش ابری ناموفق بود؛ تلگرام را بررسی کنید')}try{if(telegramWindow)telegramWindow.location=telegramUrl;else window.location.href=telegramUrl}catch{}}
-window.reportUser=async(uid,name)=>{const reason=prompt(`دلیل گزارش ${name||'کاربر'} چیست؟`,'رفتار نامناسب');if(!reason)return;await submitReport({type:'user',targetUid:uid,targetName:name,reason,chatId:currentChatId||''})};
-window.showStorageInfo=async()=>{let cache='در دسترس نیست';try{if(navigator.storage?.estimate){const e=await navigator.storage.estimate();cache=`استفاده‌شده: ${formatBytes(e.usage||0)} / سهمیه: ${formatBytes(e.quota||0)}`}}catch{}$('storage-info').textContent=cache};window.clearLocalPreferences=()=>{if(!confirm('تنظیمات ظاهری، مخاطبان پین‌شده و پیام‌های محلی لیمو بات پاک شوند؟'))return;[prefsKey(),pinKey(),hiddenKey(),botKey()].forEach(k=>localStorage.removeItem(k));showToast('تنظیمات محلی بازنشانی شد');location.reload()};
+async function applySession(session) {
+  const uid = session?.user?.id || null;
+  if (uid && currentSessionUid === uid && currentUserData) {
+    currentAuthUser = session.user;
+    return true;
+  }
+  if (uid && sessionInitUid === uid && sessionInitPromise) return sessionInitPromise;
+  const task = initializeSession(session);
+  if (uid) {
+    sessionInitUid = uid;
+    sessionInitPromise = task;
+  }
+  try {
+    return await task;
+  } finally {
+    if (uid && sessionInitUid === uid) {
+      sessionInitUid = null;
+      sessionInitPromise = null;
+    }
+  }
+}
 
-// ربات محلی: بدون API Key و بدون ارسال متن گفتگو به سرویس بیرونی
-function loadBotMessages(){try{botMessages=JSON.parse(localStorage.getItem(botKey())||'[]')}catch{botMessages=[]}if(!botMessages.length)botMessages=[{text:'سلام! من لیمو بات هستم 🍋\nمی‌توانم درباره امکانات برنامه راهنمایی‌تان کنم. فعلاً پاسخ‌ها به‌صورت محلی و از پیش تعریف‌شده تولید می‌شوند.',senderId:'bot',senderName:'لیمو بات',createdAt:new Date().toISOString()}];renderBotMessages()}
-function renderBotMessages(){const root=$('messages');root.replaceChildren();botMessages.forEach(m=>{const wrap=document.createElement('div');wrap.className='msg-wrap '+(m.senderId===currentUserData.uid?'me':'them');const bubble=document.createElement('div');bubble.className='message';const text=document.createElement('div');text.className='msg-text';text.textContent=m.text;const meta=document.createElement('div');meta.className='msg-meta';meta.textContent=displayTime(m.createdAt);bubble.append(text,meta);wrap.appendChild(bubble);root.appendChild(wrap)});root.scrollTop=root.scrollHeight}
-async function addBotMessage(text,fromMe){botMessages.push({text,senderId:fromMe?currentUserData.uid:'bot',senderName:fromMe?currentUserData.displayName:'لیمو بات',createdAt:new Date().toISOString()});localStorage.setItem(botKey(),JSON.stringify(botMessages.slice(-150)));renderBotMessages();if(fromMe){setTimeout(()=>{const answer=botReply(text);botMessages.push({text:answer,senderId:'bot',senderName:'لیمو بات',createdAt:new Date().toISOString()});localStorage.setItem(botKey(),JSON.stringify(botMessages.slice(-150)));renderBotMessages()},450)}}
-function botReply(text){const t=text.toLowerCase();if(/سلام|درود|hi|hello/.test(t))return'سلام! خوشحالم که اینجایی 😊 چه کمکی از دستم برمی‌آید؟';if(/تنظیم|تم|ظاهر/.test(t))return'برای تغییر ظاهر به تنظیمات ← تم و ظاهر برو و پوسته Aero، روشن یا تیره را انتخاب کن.';if(/عکس|تصویر/.test(t))return'در گفتگوی خصوصی یا عمومی روی آیکون تصویر بزن. عکس در مرورگر فشرده می‌شود و فایل نهایی تا ۲ مگابایت در Firebase Storage بارگذاری می‌شود.';if(/تماس|زنگ/.test(t))return'در گفتگوی خصوصی، آیکون تلفن بالای صفحه را بزن. تماس به اجازه میکروفون و دسترسی شبکه و قواعد Firestore برای مجموعه calls نیاز دارد.';if(/امن|ناشناس|حریم/.test(t))return'در تنظیمات ← حریم خصوصی می‌توانی نام نمایشی ناشناس و رسید خواندن را مدیریت کنی. توجه کن این نسخه رمزنگاری سرتاسری ندارد و هویت کاربر برای سامانه قابل مشاهده است.';if(/گزارش|مسدود/.test(t))return'برای گزارش یا مسدودسازی، روی گفتگو چند لحظه نگه دار یا منوی سه‌نقطه را در صفحه چت باز کن.';if(/آیدی|رمز|حساب/.test(t))return'از تنظیمات ← حساب کاربری می‌توانی نام نمایشی، آیدی و رمز ورود را مدیریت کنی.';return'متوجه شدم 🌱 من نسخه محلی لیمو بات هستم و هنوز به مدل هوش مصنوعی آنلاین متصل نیستم. می‌توانی درباره تنظیمات، تماس، عکس، امنیت یا حساب کاربری سؤال کنی.'}
+async function initializeSession(session) {
+  const user = session?.user || null;
+  if (!user) {
+    currentSessionUid = null; currentUserData = null; currentAuthUser = null;
+    if (chatChannel) removeChannel(chatChannel); chatChannel = null;
+    if (messageChannel) removeChannel(messageChannel); messageChannel = null;
+    if (incomingCallChannel) removeChannel(incomingCallChannel); incomingCallChannel = null;
+    cleanupCall(false);
+    openAuth();
+    return;
+  }
+  if (currentSessionUid && currentSessionUid !== user.id) {
+    if (chatChannel) removeChannel(chatChannel); chatChannel = null;
+    if (messageChannel) removeChannel(messageChannel); messageChannel = null;
+    if (incomingCallChannel) removeChannel(incomingCallChannel); incomingCallChannel = null;
+    cleanupCall(false); currentChatId = null; currentChatParticipants = [];
+  }
+  if (currentSessionUid === user.id && currentUserData) { currentAuthUser = user; return; }
+  currentSessionUid = user.id; currentAuthUser = user;
+  userPrefs = { anonymous: false, readReceipts: true, notifications: false, showOnline: true, theme: 'aero', primary: '#91d832' };
+  try {
+    // 1) دریافت نمایه موجود. select('*') برای سازگاری با نصب‌های قبلی حفظ شده است.
+    let { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (profileError) throw profileError;
 
-// تماس صوتی WebRTC با سیگنالینگ Firestore
-function otherParticipant(){return currentChatParticipants.find(uid=>uid!==currentUserData.uid)}
-window.startVoiceCall=async()=>{const callee=otherParticipant();if(!callee)return showToast('تماس فقط در گفتگوی خصوصی دونفره فعال است');if(!window.isSecureContext)return showToast('تماس صوتی به HTTPS نیاز دارد');if(!navigator.mediaDevices?.getUserMedia)return showToast('مرورگر به میکروفون دسترسی نمی‌دهد');try{localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});callRole='caller';callRef=doc(collection(db,'calls'));callPc=makePeerConnection();localStream.getTracks().forEach(t=>callPc.addTrack(t,localStream));listenForCandidates('calleeCandidates');await setDoc(callRef,{callerId:currentUserData.uid,callerName:currentUserData.displayName,calleeId:callee,chatId:currentChatId,status:'ringing',createdAt:serverTimestamp()});const offer=await callPc.createOffer();await callPc.setLocalDescription(offer);await updateDoc(callRef,{offer:{type:offer.type,sdp:offer.sdp}});createAvatar($('call-avatar'),currentChatAvatar||currentChatName);showCallScreen(currentChatName,'در حال تماس...');watchCallDocument()}catch(error){console.error(error);cleanupCall();showToast('شروع تماس ناموفق بود؛ مجوز calls و میکروفون را بررسی کنید')}};
-function makePeerConnection(){const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});pc.onicecandidate=async event=>{if(event.candidate&&callRef){const name=callRole==='caller'?'callerCandidates':'calleeCandidates';try{await addDoc(collection(callRef,name),event.candidate.toJSON())}catch(e){console.error('ICE:',e)}}};pc.ontrack=event=>{const audio=$('remote-audio');audio.srcObject=event.streams[0];audio.play().catch(()=>{})};pc.onconnectionstatechange=()=>{if(['connected'].includes(pc.connectionState))$('call-status').textContent='تماس برقرار است';if(['failed','disconnected'].includes(pc.connectionState))$('call-status').textContent='اتصال ناپایدار است'};return pc}
-function listenForCandidates(collectionName){if(candidateUnsub)candidateUnsub();const remoteCollection=collection(callRef,collectionName==='calleeCandidates'?'calleeCandidates':'callerCandidates');candidateUnsub=onSnapshot(remoteCollection,snapshot=>snapshot.docChanges().forEach(change=>{if(change.type==='added'&&callPc){callPc.addIceCandidate(new RTCIceCandidate(change.doc.data())).catch(e=>console.warn(e))}}))}
-function watchCallDocument(){if(callSnapshotUnsub)callSnapshotUnsub();callSnapshotUnsub=onSnapshot(callRef,async snap=>{if(!snap.exists())return;const data=snap.data();if(callRole==='caller'&&data.answer&&!callPc.currentRemoteDescription){try{await callPc.setRemoteDescription(new RTCSessionDescription(data.answer));$('call-status').textContent='در حال اتصال...'}catch(e){console.error(e)}}if(data.status==='ended'||data.status==='declined'){showToast(data.status==='declined'?'تماس رد شد':'تماس پایان یافت');cleanupCall()}})}
-function showCallScreen(name,status,incoming=false){$('call-name').textContent=name||'کاربر';$('call-status').textContent=status;$('incoming-actions').style.display=incoming?'flex':'none';$('active-call-controls').style.display=incoming?'none':'flex';$('call-overlay').classList.add('show')}
-function cleanupCall(){if(callSnapshotUnsub){callSnapshotUnsub();callSnapshotUnsub=null}if(candidateUnsub){candidateUnsub();candidateUnsub=null}if(callPc){callPc.close();callPc=null}if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null}$('remote-audio').srcObject=null;$('call-overlay').classList.remove('show');callRef=null;callRole=null;callMuted=false}
-window.endCall=async()=>{try{if(callRef)await updateDoc(callRef,{status:'ended',endedAt:serverTimestamp()})}catch(e){}cleanupCall()};window.toggleMute=()=>{if(!localStream)return;callMuted=!callMuted;localStream.getAudioTracks().forEach(t=>t.enabled=!callMuted);$('mute-button').innerHTML=callMuted?'<i class="fa-solid fa-microphone-slash"></i>':'<i class="fa-solid fa-microphone"></i>'};window.toggleSpeaker=()=>{callSpeaker=!callSpeaker;$('remote-audio').muted=!callSpeaker;$('speaker-button').style.opacity=callSpeaker?'1':'.5'};
-function watchIncomingCalls(){if(incomingCallUnsub)incomingCallUnsub();const q=query(collection(db,'calls'),where('calleeId','==',currentUserData.uid),where('status','==','ringing'));incomingCallUnsub=onSnapshot(q,snapshot=>snapshot.docChanges().forEach(change=>{if(change.type==='added'&&!processingIncoming.has(change.doc.id)){processingIncoming.add(change.doc.id);const data=change.doc.data();pendingIncoming={id:change.doc.id,data};showCallScreen(data.callerName||'تماس ورودی','در حال تماس...',true);createAvatar($('call-avatar'),data.callerName||'ل')}}),error=>console.warn('Incoming call listener:',error))}
-let pendingIncoming=null;
-window.acceptIncomingCall=async()=>{if(!pendingIncoming)return;try{callRef=doc(db,'calls',pendingIncoming.id);callRole='callee';const latestCall=await getDoc(callRef);const callData=latestCall.data()||pendingIncoming.data;if(!callData.offer)throw new Error('CALL_OFFER_NOT_READY');localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});callPc=makePeerConnection();localStream.getTracks().forEach(t=>callPc.addTrack(t,localStream));listenForCandidates('callerCandidates');await callPc.setRemoteDescription(new RTCSessionDescription(callData.offer));const answer=await callPc.createAnswer();await callPc.setLocalDescription(answer);await updateDoc(callRef,{answer:{type:answer.type,sdp:answer.sdp},status:'active'});watchCallDocument();$('incoming-actions').style.display='none';$('active-call-controls').style.display='flex';$('call-status').textContent='تماس برقرار شد'}catch(e){console.error(e);showToast('پاسخ به تماس ممکن نشد');cleanupCall()}};
-window.declineIncomingCall=async()=>{if(pendingIncoming){try{await updateDoc(doc(db,'calls',pendingIncoming.id),{status:'declined'})}catch{}}pendingIncoming=null;cleanupCall()};
-window.refreshCalls=async()=>{const root=$('calls-list');root.innerHTML='<div class="empty-state">در حال بارگذاری تماس‌ها...</div>';try{const [a,b]=await Promise.all([getDocs(query(collection(db,'calls'),where('callerId','==',currentUserData.uid))),getDocs(query(collection(db,'calls'),where('calleeId','==',currentUserData.uid)))]);const rows=new Map();[...a.docs,...b.docs].forEach(d=>rows.set(d.id,{id:d.id,...d.data()}));root.replaceChildren();if(!rows.size){root.innerHTML='<div class="empty-state"><i class="fa-solid fa-phone"></i><p>هنوز سابقه تماسی ندارید.</p></div>';return}Array.from(rows.values()).sort((x,y)=>getTimestamp(y.createdAt)-getTimestamp(x.createdAt)).forEach(c=>{const row=document.createElement('div');row.className='call-row';const av=document.createElement('div');av.className='avatar';av.textContent='☎';const info=document.createElement('div');info.className='info';const title=document.createElement('b');title.textContent=c.callerId===currentUserData.uid?'تماس خروجی':'تماس ورودی';const small=document.createElement('small');small.textContent=`${c.status||'نامشخص'} · ${displayTime(c.createdAt)}`;info.append(title,small);const icon=document.createElement('button');icon.innerHTML='<i class="fa-solid fa-phone"></i>';icon.onclick=()=>showToast('برای تماس مجدد، گفتگوی خصوصی کاربر را باز کنید');row.append(av,info,icon);root.appendChild(row)})}catch(e){console.error(e);root.innerHTML='<div class="empty-state"><p>سابقه تماس قابل دریافت نیست؛ دسترسی calls را بررسی کنید.</p></div>'}};
+    // 2) کاربران قدیمی ممکن است پیش از نصب trigger ساخته شده باشند و نمایه نداشته باشند.
+    // RPC با SECURITY DEFINER فقط برای auth.uid() فعلی نمایه می‌سازد؛ کلاینت مجوز INSERT عمومی نمی‌گیرد.
+    if (!profile) {
+      const { data: ensuredProfile, error: ensureError } = await supabase.rpc('ensure_limo_profile');
+      if (ensureError) throw ensureError;
+      profile = Array.isArray(ensuredProfile) ? ensuredProfile[0] : ensuredProfile;
+    }
+    if (!profile || profile.id !== user.id) {
+      throw new Error('PROFILE_ROW_MISSING: پاسخ ایجاد/دریافت نمایه خالی یا متعلق به حساب دیگری است.');
+    }
 
-// بارگذاری پوسته و رنگ ذخیره‌شده
-const savedTheme=localStorage.getItem('limo_theme');if(savedTheme)document.documentElement.dataset.theme=savedTheme;const savedColor=localStorage.getItem('limo_primary');if(savedColor)document.documentElement.style.setProperty('--primary',savedColor);
+    currentUserData = mapProfile(profile);
+    if (!currentUserData.uid || !currentUserData.username) {
+      currentUserData = null;
+      throw new Error('PROFILE_DATA_INVALID: ردیف profiles فاقد id یا username معتبر است.');
+    }
+
+    // پروفایل آماده است؛ خطاهای تنظیمات اختیاری نباید کاربر را از ورود خارج کنند.
+    renderProfile();
+    window.navigateTo('main');
+    const optionalLoads = await Promise.allSettled([loadPrefs(), loadChatStates(), loadBlockedUsers()]);
+    optionalLoads.forEach((result, index) => {
+      if (result.status === 'rejected') console.warn('Optional account data load failed:', index, result.reason);
+    });
+    void loadChatList().catch(error => console.warn('Chat list load failed:', error));
+    try { watchIncomingCalls(); } catch (error) { console.warn('Incoming call watcher failed:', error); }
+    return true;
+  } catch (error) {
+    currentUserData = null;
+    const detail = String(error?.message || error || 'Unknown error');
+    const code = String(error?.code || '');
+    console.error('Supabase profile initialization:', { message: detail, code, details: error?.details, hint: error?.hint });
+    const lower = detail.toLowerCase();
+    let userMessage;
+    if (/relation .* does not exist|could not find the table|profiles.*not found/i.test(detail)) {
+      userMessage = 'جدول profiles در دیتابیس پیدا نشد. ابتدا supabase-schema.sql را در SQL Editor اجرا کنید.';
+    } else if (code === 'PGRST202' || lower.includes('ensure_limo_profile') && (lower.includes('not found') || lower.includes('schema cache'))) {
+      userMessage = 'تابع اصلاح پروفایل نصب نشده است. فایل supabase-profile-repair.sql را در SQL Editor اجرا کنید.';
+    } else if (code === '42501' || lower.includes('row-level security') || lower.includes('permission denied')) {
+      userMessage = 'دسترسی دیتابیس برای پروفایل رد شد. فایل supabase-profile-repair.sql را در SQL Editor اجرا کنید.';
+    } else if (detail.startsWith('PROFILE_ROW_MISSING') || detail.startsWith('PROFILE_DATA_INVALID')) {
+      userMessage = 'پروفایل حساب در دیتابیس کامل نیست. فایل supabase-profile-repair.sql را اجرا و دوباره تلاش کنید.';
+    } else if (lower.includes('failed to fetch') || lower.includes('network')) {
+      userMessage = 'ارتباط با Supabase برقرار نشد. اینترنت، آدرس پروژه و وضعیت Supabase را بررسی کنید.';
+    } else {
+      userMessage = 'ورود تأیید شد، اما دریافت پروفایل انجام نشد: ' + detail.slice(0, 180);
+    }
+    showToast(userMessage);
+    openAuth();
+    return false;
+  }
+}
+
+supabase.auth.onAuthStateChange((event, session) => {
+  // فراخوانی API خارج از callback انجام می‌شود تا قفل داخلی Auth مسدود نشود.
+  if (event === 'INITIAL_SESSION' && bootstrapPending) finishBootstrap(session);
+  else if (['SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED', 'TOKEN_REFRESHED'].includes(event)) setTimeout(() => { void applySession(session).catch(error => console.error('Auth state update:', error)); }, 0);
+});
+
+window.handleAuth = async () => {
+  const username = normalizeUsername($('auth-username').value);
+  const password = $('auth-password').value;
+  const button = $('auth-submit');
+  if (!/^[a-z0-9_.]{3,24}$/.test(username)) return showToast('آیدی باید ۳ تا ۲۴ حرف انگلیسی، عدد یا _ و . باشد');
+  if (password.length < 6) return showToast('رمز عبور باید حداقل ۶ کاراکتر باشد');
+  button.disabled = true; button.textContent = 'در حال اتصال به Supabase...';
+  try {
+    if (isLoginMode) {
+      const { data, error } = await supabase.auth.signInWithPassword({ email: userEmail(username), password });
+      if (error) throw error;
+      if (data.session) {
+        const ready = await applySession(data.session);
+        if (ready && currentUserData) showToast('با موفقیت وارد شدید');
+        // در صورت شکست بازیابی پروفایل، پیام تشخیصی initializeSession حفظ می‌شود.
+      } else {
+        throw new Error('ورود انجام شد اما نشست معتبری از Supabase دریافت نشد.');
+      }
+    } else {
+      const { data, error } = await supabase.auth.signUp({
+        email: userEmail(username), password,
+        options: { data: { username, display_name: username } }
+      });
+      if (error) throw error;
+      if (data.session) {
+        const ready = await applySession(data.session);
+        if (ready && currentUserData) showToast('حساب شما ساخته شد');
+        // خطای پروفایل قبلاً با علت دقیق نمایش داده شده است.
+      } else {
+        showToast('حساب ثبت شد اما نشست ساخته نشد. تأیید ایمیل Supabase را بررسی کنید؛ سپس پس از تأیید حساب، وارد شوید.');
+      }
+    }
+  } catch (error) {
+    console.error('Supabase Auth:', error);
+    const message = String(error.message || '').toLowerCase();
+    if (message.includes('already registered') || message.includes('already been registered') || message.includes('duplicate')) showToast('این آیدی قبلاً ثبت شده است');
+    else if (message.includes('invalid login credentials')) showToast('آیدی یا رمز عبور اشتباه است');
+    else if (message.includes('email not confirmed')) showToast('تأیید ایمیل فعال است؛ برای ورود با آیدی، Confirm email را در Supabase خاموش کنید.');
+    else showToast('اتصال یا عملیات حساب ناموفق بود: ' + (error.message || 'خطای نامشخص'));
+  } finally { button.disabled = false; button.textContent = isLoginMode ? 'ورود' : 'ساخت حساب'; }
+};
+window.loginWithGoogle = async () => {
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
+    if (error) throw error;
+  } catch (error) { console.error(error); showToast('ورود گوگل انجام نشد؛ ابتدا Google Provider و Redirect URL را در Supabase تنظیم کنید.'); }
+};
+window.logout = async () => {
+  if (!confirm('از حساب کاربری خارج می‌شوید؟')) return;
+  const { error } = await supabase.auth.signOut();
+  if (error) showToast('خروج انجام نشد: ' + error.message);
+};
+
+async function loadChatList() {
+  if (!currentUserData) return;
+  const container = $('chat-list');
+  if (chatChannel) removeChannel(chatChannel);
+  try {
+    const { data: memberships, error: memberError } = await supabase.from('chat_members').select('chat_id,user_id').eq('user_id', currentUserData.uid);
+    if (memberError) throw memberError;
+    const ids = (memberships || []).map(row => row.chat_id);
+    let chats = [];
+    if (ids.length) {
+      const { data, error } = await supabase.from('chats').select('*').in('id', ids).order('updated_at', { ascending: false });
+      if (error) throw error;
+      chats = data || [];
+    }
+    const participantsByChat = new Map();
+    if (ids.length) {
+      const { data: members, error } = await supabase.from('chat_members').select('chat_id,user_id').in('chat_id', ids);
+      if (error) throw error;
+      (members || []).forEach(row => { if (!participantsByChat.has(row.chat_id)) participantsByChat.set(row.chat_id, []); participantsByChat.get(row.chat_id).push(row.user_id); });
+    }
+    const otherIds = [...new Set([...participantsByChat.values()].flat().filter(id => id !== currentUserData.uid))];
+    const profilesById = new Map();
+    if (otherIds.length) {
+      const { data: profiles, error } = await supabase.from('profiles').select('id,username,display_name,avatar_url').in('id', otherIds);
+      if (error) throw error;
+      (profiles || []).forEach(profile => profilesById.set(profile.id, profile));
+    }
+    const rows = chats.map(chat => {
+      const participants = participantsByChat.get(chat.id) || [currentUserData.uid];
+      const otherUid = participants.find(id => id !== currentUserData.uid) || '';
+      const profile = profilesById.get(otherUid);
+      return { id: chat.id, name: profile?.display_name || profile?.username || chat.name || 'گفتگوی خصوصی', avatar: profile?.avatar_url || profile?.display_name || 'ل', lastMessage: chat.last_message || 'شروع مکالمه...', participants, otherUid, type: 'private' };
+    });
+    renderChatList(rows);
+    chatChannel = supabase.channel('chat-list-' + currentUserData.uid)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_members', filter: `user_id=eq.${currentUserData.uid}` }, () => loadChatList())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chats' }, () => loadChatList())
+      .subscribe();
+  } catch (error) {
+    console.error('Chat list:', error);
+    container.innerHTML = '<div class="empty-state"><i class="fa-regular fa-comments"></i><p>دریافت گفتگوها ناموفق بود. اتصال Supabase و سیاست‌های RLS را بررسی کنید.</p></div>';
+    showToast('دریافت گفتگوها از Supabase ناموفق بود');
+  }
+}
+function renderChatList(chats = []) {
+  const container = $('chat-list');
+  container.replaceChildren();
+  const pinned = getSet(pinKey()); const hidden = getSet(hiddenKey());
+  container.appendChild(makeChatRow({ id: 'bot', name: 'لیمو بات', avatar: '🤖', lastMessage: 'دستیار راهنمای داخل برنامه', type: 'bot' }));
+  container.appendChild(makeChatRow({ id: 'global', name: 'گفتگوی عمومی', avatar: '🌍', lastMessage: 'گفتگوی جمعی لیمو چت', type: 'global' }));
+  chats.filter(chat => !hidden.has(chat.id)).sort((a,b) => (pinned.has(b.id) ? 1 : 0) - (pinned.has(a.id) ? 1 : 0)).forEach(chat => {
+    if ((chat.participants || []).some(uid => isBlocked(uid) && uid !== currentUserData.uid)) return;
+    container.appendChild(makeChatRow(chat));
+  });
+  if (container.children.length === 2) {
+    const hint = document.createElement('div'); hint.className = 'empty-state';
+    hint.innerHTML = '<i class="fa-regular fa-comments"></i><p>هنوز گفتگوی خصوصی ندارید.<br>با جستجوی آیدی دوستانتان را پیدا کنید.</p>';
+    container.appendChild(hint);
+  }
+}
+function makeChatRow(info) {
+  const row = document.createElement('div'); row.className = 'chat-row'; row.dataset.chatId = info.id;
+  const avatar = document.createElement('div'); avatar.className = 'avatar';
+  if (info.avatar && /^https?:\/\//.test(info.avatar)) createAvatar(avatar, info.avatar); else avatar.textContent = info.avatar || 'ل';
+  const body = document.createElement('div'); body.className = 'chat-details';
+  const top = document.createElement('div'); top.className = 'chat-topline';
+  const name = document.createElement('span'); name.className = 'chat-name'; name.textContent = info.name;
+  const time = document.createElement('small'); time.className = 'chat-time';
+  const bottom = document.createElement('div'); bottom.className = 'chat-bottomline';
+  const preview = document.createElement('span'); preview.className = 'chat-preview'; preview.textContent = info.lastMessage || '';
+  if (getSet(pinKey()).has(info.id)) { const pin = document.createElement('i'); pin.className = 'fa-solid fa-thumbtack pin-mark'; name.prepend(pin); }
+  top.append(name, time); bottom.append(preview); body.append(top, bottom); row.append(avatar, body);
+  row.addEventListener('click', () => window.openChatRoom(info.id, info.name, info.avatar, info.participants || [], info.type));
+  let pressTimer = null; let longPressed = false;
+  row.addEventListener('touchstart', () => { longPressed = false; pressTimer = setTimeout(() => { longPressed = true; window.openChatContext(info); }, 550); }, { passive: true });
+  row.addEventListener('touchend', () => clearTimeout(pressTimer)); row.addEventListener('touchmove', () => clearTimeout(pressTimer));
+  row.addEventListener('contextmenu', event => { event.preventDefault(); window.openChatContext(info); });
+  row.addEventListener('click', event => { if (longPressed) { event.stopImmediatePropagation(); longPressed = false; } }, { capture: true });
+  return row;
+}
+
+window.openChatRoom = async (id, name, avatar, participants = [], type = null) => {
+  if (!currentUserData) return openAuth();
+  currentChatId = id; currentChatType = type || (id === 'global' ? 'global' : id === 'bot' ? 'bot' : 'private');
+  currentChatName = name || 'گفتگو'; currentChatAvatar = avatar || 'ل'; currentChatParticipants = participants;
+  if (currentChatType === 'private' && !currentChatParticipants.length) {
+    const { data } = await supabase.from('chat_members').select('user_id').eq('chat_id', id);
+    currentChatParticipants = (data || []).map(row => row.user_id);
+  }
+  createAvatar($('room-avatar'), currentChatAvatar); $('room-name').textContent = currentChatName;
+  $('room-status').textContent = currentChatType === 'bot' ? 'دستیار داخل برنامه' : currentChatType === 'global' ? 'گفتگوی عمومی' : (userPrefs.showOnline ? 'گفتگوی خصوصی' : 'وضعیت مخفی');
+  $('call-button').style.display = currentChatType === 'private' ? 'grid' : 'none';
+  replyTarget = null; $('reply-preview').classList.remove('show');
+  window.navigateTo('chat-room');
+  if (currentChatType === 'bot') { await loadBotMessages(); return; }
+  loadMessages(id);
+};
+window.closeChatRoom = () => {
+  if (messageChannel) removeChannel(messageChannel); messageChannel = null;
+  currentChatId = null; replyTarget = null; window.navigateTo('main');
+};
+async function fetchCurrentMessages(chatId) {
+  const table = currentChatType === 'global' ? 'global_messages' : 'messages';
+  let query = supabase.from(table).select('*').order('created_at', { ascending: true }).limit(500);
+  if (table === 'messages') query = query.eq('chat_id', chatId);
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data || []).map(mapMessage).filter(message => message.senderId === currentUserData.uid || !isBlocked(message.senderId));
+}
+async function loadMessages(chatId) {
+  const container = $('messages'); container.replaceChildren();
+  if (messageChannel) removeChannel(messageChannel); messageChannel = null;
+  try {
+    await renderMessagesFromServer(chatId);
+    const table = currentChatType === 'global' ? 'global_messages' : 'messages';
+    const channel = supabase.channel('messages-' + (currentChatType === 'global' ? 'global' : chatId));
+    if (table === 'global_messages') channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => renderMessagesFromServer(chatId));
+    else channel.on('postgres_changes', { event: '*', schema: 'public', table, filter: `chat_id=eq.${chatId}` }, () => renderMessagesFromServer(chatId));
+    messageChannel = channel.subscribe();
+    if (currentChatType === 'private' && userPrefs.readReceipts) supabase.rpc('mark_chat_messages_read', { target_chat: chatId }).then(({ error }) => { if (error) console.warn('Read receipts:', error.message); });
+  } catch (error) {
+    console.error('Messages:', error);
+    container.innerHTML = '<div class="empty-state"><p>پیام‌ها دریافت نشدند. دسترسی جدول پیام‌ها و Supabase Realtime را بررسی کنید.</p></div>';
+  }
+}
+async function renderMessagesFromServer(chatId) {
+  if (currentChatId !== chatId) return;
+  try {
+    const rows = await fetchCurrentMessages(chatId);
+    if (currentChatId !== chatId) return;
+    const root = $('messages'); root.replaceChildren();
+    if (!rows.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = 'هنوز پیامی وجود ندارد. اولین پیام را بفرستید.'; root.appendChild(empty); return; }
+    for (const message of rows) await renderMessage(message);
+    root.scrollTop = root.scrollHeight;
+  } catch (error) { console.error(error); showToast('به‌روزرسانی پیام‌ها ناموفق بود'); }
+}
+async function renderMessage(message) {
+  const container = $('messages');
+  const isMe = message.senderId === currentUserData.uid;
+  const wrap = document.createElement('div'); wrap.className = 'msg-wrap ' + (isMe ? 'me' : 'them');
+  const bubble = document.createElement('div'); bubble.className = 'message';
+  if (currentChatType === 'global' && !isMe) { const sender = document.createElement('div'); sender.className = 'sender'; sender.textContent = message.senderName || 'کاربر'; bubble.appendChild(sender); }
+  if (message.replyTo?.text) { const quote = document.createElement('div'); quote.className = 'reply-quote'; quote.textContent = 'پاسخ به: ' + message.replyTo.text.slice(0,100); bubble.appendChild(quote); }
+  if (message.imagePath) {
+    const img = document.createElement('img'); img.className = 'msg-image'; img.alt = message.imageName || 'تصویر ارسال‌شده'; img.loading = 'lazy';
+    bubble.appendChild(img);
+    supabase.storage.from('chat-media').createSignedUrl(message.imagePath, 3600).then(({ data, error }) => { if (!error && data?.signedUrl) img.src = data.signedUrl; }).catch(error => console.warn('Image URL:', error));
+    img.addEventListener('click', event => { event.stopPropagation(); if (img.src) window.open(img.src, '_blank', 'noopener'); });
+  }
+  if (message.text) { const text = document.createElement('div'); text.className = 'msg-text'; text.textContent = message.text; bubble.appendChild(text); }
+  const meta = document.createElement('div'); meta.className = 'msg-meta';
+  const time = document.createElement('span'); time.textContent = displayTime(message.createdAt); meta.appendChild(time);
+  if (message.edited) { const edited = document.createElement('span'); edited.className = 'edited'; edited.textContent = 'ویرایش‌شده'; meta.appendChild(edited); }
+  if (isMe) { const ticks = document.createElement('span'); ticks.className = 'ticks'; ticks.textContent = message.status === 'read' ? '✓✓' : '✓'; meta.appendChild(ticks); }
+  bubble.appendChild(meta); bubble.addEventListener('click', () => window.openMessageActions(message));
+  bubble.addEventListener('contextmenu', event => { event.preventDefault(); window.openMessageActions(message); });
+  wrap.appendChild(bubble);
+  if (message.reactions && Object.keys(message.reactions).length) {
+    const reactions = document.createElement('div'); reactions.className = 'reactions';
+    Object.entries(message.reactions).forEach(([uid, emoji]) => { const chip = document.createElement('span'); chip.className = 'reaction'; chip.textContent = emoji; reactions.appendChild(chip); });
+    wrap.appendChild(reactions);
+  }
+  container.appendChild(wrap);
+}
+window.sendMessage = async () => {
+  const input = $('message-input'); const text = input.value.trim();
+  if (!text || !currentChatId) return;
+  if (!profanityCheck(text)) return;
+  if (currentChatType === 'private') { const other = currentChatParticipants.find(uid => uid !== currentUserData.uid); if (other && isBlocked(other)) return showToast('این کاربر را مسدود کرده‌اید'); }
+  if (currentChatType === 'bot') { input.value = ''; await addBotMessage(text, true); return; }
+  input.value = '';
+  const payload = { sender_id: currentUserData.uid, sender_name: userPrefs.anonymous ? 'کاربر ناشناس' : currentUserData.displayName, text, status: 'sent' };
+  if (currentChatType === 'private') payload.chat_id = currentChatId;
+  if (replyTarget) payload.reply_to = { id: replyTarget.id, text: replyTarget.text || 'تصویر' };
+  const { error } = await supabase.from(messageTable()).insert(payload);
+  if (error) { console.error(error); input.value = text; showToast('ارسال پیام ناموفق بود: ' + error.message); return; }
+  if (currentChatType === 'private') {
+    const { error: chatError } = await supabase.from('chats').update({ last_message: text.slice(0,120), updated_at: new Date().toISOString() }).eq('id', currentChatId);
+    if (chatError) console.warn('Updating chat preview:', chatError.message);
+  }
+  window.clearReply();
+};
+window.openMessageActions = message => {
+  activeMessage = message;
+  const items = [['fa-face-smile','ثبت واکنش',window.reactToMessage],['fa-reply','پاسخ به پیام',window.replyToMessage],['fa-copy','کپی متن',window.copyActiveMessage]];
+  if (message.senderId === currentUserData.uid) items.push(['fa-pen','ویرایش پیام',window.editActiveMessage],['fa-trash','حذف پیام',window.deleteActiveMessage]);
+  else items.push(['fa-flag','گزارش پیام',() => window.reportMessage(message)]);
+  showActionSheet('گزینه‌های پیام', items);
+};
+function showActionSheet(title, items) {
+  $('action-title').textContent = title; const root = $('action-items'); root.replaceChildren();
+  items.forEach(([icon,label,fn]) => {
+    const row = document.createElement('div'); row.className = 'action-row' + (label.includes('حذف') || label.includes('گزارش') ? ' danger' : '');
+    const i = document.createElement('i'); i.className = 'fa-solid ' + icon; const span = document.createElement('span'); span.textContent = label;
+    row.append(i, span); row.onclick = () => { window.closeActionMenu(); fn(); }; root.appendChild(row);
+  });
+  $('action-overlay').classList.add('show');
+}
+window.copyActiveMessage = async () => {
+  if (!activeMessage?.text) return showToast('این پیام متن ندارد');
+  try { await navigator.clipboard.writeText(activeMessage.text); showToast('متن کپی شد'); } catch { showToast('دسترسی کپی فعال نیست'); }
+};
+window.replyToMessage = () => { if (!activeMessage) return; replyTarget = activeMessage; $('reply-preview-text').textContent = 'پاسخ به: ' + (activeMessage.text || 'تصویر'); $('reply-preview').classList.add('show'); $('message-input').focus(); };
+window.clearReply = () => { replyTarget = null; $('reply-preview').classList.remove('show'); };
+window.editActiveMessage = async () => {
+  if (!activeMessage || activeMessage.senderId !== currentUserData.uid || !activeMessage.text) return;
+  const value = prompt('متن ویرایش‌شده را وارد کنید:', activeMessage.text); if (value === null || !value.trim()) return;
+  if (!profanityCheck(value)) return;
+  const table = messageTable(); const { error } = await supabase.from(table).update({ text: value.trim(), edited: true, edited_at: new Date().toISOString() }).eq('id', activeMessage.id).eq('sender_id', currentUserData.uid);
+  if (error) showToast('ویرایش پیام ناموفق بود: ' + error.message); else showToast('پیام ویرایش شد');
+};
+window.deleteActiveMessage = async () => {
+  if (!activeMessage || activeMessage.senderId !== currentUserData.uid) return;
+  if (!confirm('این پیام برای همه حذف شود؟')) return;
+  const { error } = await supabase.from(messageTable()).delete().eq('id', activeMessage.id).eq('sender_id', currentUserData.uid);
+  if (error) showToast('حذف پیام ناموفق بود: ' + error.message); else showToast('پیام حذف شد');
+};
+window.reactToMessage = async () => {
+  if (!activeMessage) return;
+  const choice = prompt('یک واکنش انتخاب کنید: ❤️ 😂 👍 😮 😢 🔥', '❤️'); if (!choice) return;
+  const allowed = ['❤️','😂','👍','😮','😢','🔥','👏','🙏'];
+  if (!allowed.includes(choice.trim())) return showToast('واکنش انتخاب‌شده پشتیبانی نمی‌شود');
+  const { error } = await supabase.rpc('react_to_message', { target_message: activeMessage.id, target_global: currentChatType === 'global', reaction: choice.trim() });
+  if (error) showToast('ثبت واکنش ناموفق بود: ' + error.message); else showToast('واکنش ثبت شد');
+};
+window.reportMessage = async message => {
+  const reason = prompt('دلیل گزارش این پیام را بنویسید:', 'محتوای نامناسب'); if (!reason) return;
+  await submitReport({ type: 'message', targetUid: message.senderId, targetName: message.senderName, messageId: message.id, chatId: currentChatId, reason, content: message.text || '' });
+};
+window.openChatActions = () => {
+  if (!currentChatId) return;
+  const other = currentChatParticipants.find(uid => uid !== currentUserData.uid); const items = [];
+  if (currentChatType === 'private' && other) { items.push(['fa-flag','گزارش کاربر',() => window.reportUser(other,currentChatName)]); items.push(['fa-ban','مسدود کردن کاربر',() => window.blockUser(other,currentChatName)]); }
+  items.push(['fa-thumbtack','پین / برداشتن پین گفتگو',() => window.togglePin({ id: currentChatId, name: currentChatName, type: currentChatType })]);
+  showActionSheet('گزینه‌های گفتگو', items);
+};
+window.openChatContext = info => {
+  activeChatInfo = info; const pinned = getSet(pinKey()); const items = [['fa-thumbtack', pinned.has(info.id) ? 'برداشتن پین' : 'پین کردن گفتگو', () => window.togglePin(info)]];
+  if (info.type === 'private' && info.otherUid) { items.push(['fa-flag','گزارش کاربر',() => window.reportUser(info.otherUid,info.name)], ['fa-ban','مسدود کردن کاربر',() => window.blockUser(info.otherUid,info.name)]); }
+  if (info.id !== 'global' && info.id !== 'bot') items.push(['fa-trash','حذف گفتگو از فهرست من',() => hideChat(info)]);
+  showActionSheet('مدیریت گفتگو: ' + info.name, items);
+};
+async function hideChat(info) {
+  const hidden = getSet(hiddenKey()); hidden.add(info.id); saveSet(hiddenKey(), hidden);
+  await saveChatState(info.id, getSet(pinKey()).has(info.id), true);
+  await loadChatList(); showToast('گفتگو از فهرست شما پنهان شد');
+}
+window.togglePin = async info => {
+  const pins = getSet(pinKey()); const hidden = getSet(hiddenKey());
+  if (pins.has(info.id)) { pins.delete(info.id); showToast('پین گفتگو برداشته شد'); }
+  else { pins.add(info.id); showToast('گفتگو پین شد'); }
+  saveSet(pinKey(), pins); await saveChatState(info.id, pins.has(info.id), hidden.has(info.id)); await loadChatList();
+};
+window.startPrivateChat = async (otherUid, otherName, otherAvatar = null) => {
+  if (!currentUserData) return openAuth();
+  if (isBlocked(otherUid)) return showToast('این کاربر در فهرست مسدودشده‌هاست');
+  try {
+    const { data: chatId, error } = await supabase.rpc('create_direct_chat', { target_user: otherUid });
+    if (error) throw error;
+    const { data: members, error: memberError } = await supabase.from('chat_members').select('user_id').eq('chat_id', chatId);
+    if (memberError) throw memberError;
+    const participants = (members || []).map(row => row.user_id);
+    window.closeSubMenu(); await window.openChatRoom(chatId, otherName || 'گفتگوی خصوصی', otherAvatar || otherName?.[0] || 'ل', participants, 'private');
+  } catch (error) { console.error(error); showToast('ساخت گفتگو ناموفق بود: ' + error.message); }
+};
+window.searchUser = async () => {
+  const username = normalizeUsername($('search-username').value); const root = $('search-results'); if (!username) return;
+  root.textContent = 'در حال جستجو در Supabase...';
+  try {
+    const { data: user, error } = await supabase.from('profiles').select('id,username,display_name,avatar_url').eq('username', username).maybeSingle();
+    if (error) throw error;
+    root.replaceChildren();
+    if (!user) { root.textContent = 'کاربری با این آیدی پیدا نشد.'; return; }
+    if (user.id === currentUserData.uid) { root.textContent = 'این آیدی متعلق به خود شماست.'; return; }
+    if (isBlocked(user.id)) { root.textContent = 'این کاربر را مسدود کرده‌اید.'; return; }
+    const card = document.createElement('div'); card.className = 'result-card';
+    const avatar = document.createElement('div'); avatar.className = 'avatar'; createAvatar(avatar, user.avatar_url || user.display_name);
+    const info = document.createElement('div'); info.className = 'result-info'; const name = document.createElement('b'); name.textContent = user.display_name || user.username;
+    const id = document.createElement('small'); id.textContent = '@' + user.username; info.append(name,id);
+    const button = document.createElement('button'); button.className = 'btn'; button.textContent = 'پیام'; button.onclick = () => window.startPrivateChat(user.id, user.display_name || user.username, user.avatar_url);
+    card.append(avatar, info, button); root.appendChild(card);
+  } catch (error) { console.error(error); root.textContent = 'جستجو در دیتابیس ناموفق بود: ' + error.message; }
+};
+
+// پردازش تصویر در مرورگر؛ فایل خصوصی در Supabase Storage ذخیره می‌شود.
+window.chooseImage = async event => {
+  const file = event.target.files?.[0]; event.target.value = ''; if (!file) return;
+  if (!file.type.startsWith('image/')) return showToast('فقط فایل تصویری مجاز است');
+  if (file.size > 15 * 1024 * 1024) return showToast('حجم فایل اولیه نباید بیش از ۱۵ مگابایت باشد');
+  if (currentChatType === 'bot') return showToast('ارسال تصویر به لیمو بات فعال نیست');
+  try {
+    const blob = await compressImage(file, 0.8); preparedImage = { file, blob, name: file.name || 'image.jpg' };
+    $('image-preview-img').src = URL.createObjectURL(blob); $('image-quality').value = 80; $('quality-label').textContent = '۸۰٪';
+    $('image-size-label').textContent = formatBytes(blob.size) + ' از حداکثر ۲ مگابایت'; $('send-image-button').disabled = blob.size > 2 * 1024 * 1024; $('image-preview').classList.add('show');
+  } catch (error) { console.error(error); showToast('خواندن یا فشرده‌سازی تصویر ناموفق بود'); }
+};
+function compressImage(file, quality) {
+  return new Promise((resolve, reject) => {
+    const img = new Image(); const url = URL.createObjectURL(file);
+    img.onload = async () => {
+      try {
+        const canvas = document.createElement('canvas'); let scale = Math.min(1, 2000 / Math.max(img.width, img.height));
+        canvas.width = Math.round(img.width * scale); canvas.height = Math.round(img.height * scale);
+        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        let q = quality; let blob = await new Promise(resolveBlob => canvas.toBlob(resolveBlob, 'image/jpeg', q));
+        while (blob && blob.size > 2 * 1024 * 1024 && q > 0.36) { q -= 0.08; blob = await new Promise(resolveBlob => canvas.toBlob(resolveBlob, 'image/jpeg', q)); }
+        while (blob && blob.size > 2 * 1024 * 1024 && canvas.width > 500) { canvas.width = Math.round(canvas.width * 0.82); canvas.height = Math.round(canvas.height * 0.82); ctx.drawImage(img, 0, 0, canvas.width, canvas.height); blob = await new Promise(resolveBlob => canvas.toBlob(resolveBlob, 'image/jpeg', Math.max(0.35,q))); }
+        URL.revokeObjectURL(url); if (!blob) reject(new Error('Image compression failed')); else resolve(blob);
+      } catch (error) { URL.revokeObjectURL(url); reject(error); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); }; img.src = url;
+  });
+}
+window.updateImageQuality = async value => {
+  if (!preparedImage) return; $('quality-label').textContent = Number(value).toLocaleString('fa-IR') + '٪';
+  try {
+    const blob = await compressImage(preparedImage.file, Number(value) / 100); preparedImage.blob = blob;
+    $('image-size-label').textContent = formatBytes(blob.size) + ' از حداکثر ۲ مگابایت'; $('send-image-button').disabled = blob.size > 2 * 1024 * 1024;
+    $('image-preview-img').src = URL.createObjectURL(blob);
+  } catch { showToast('تغییر کیفیت تصویر ناموفق بود'); }
+};
+window.cancelImage = () => { preparedImage = null; $('image-preview').classList.remove('show'); };
+window.sendPreparedImage = async () => {
+  if (!preparedImage || !currentChatId) return;
+  if (preparedImage.blob.size > 2 * 1024 * 1024) return showToast('تصویر باید حداکثر ۲ مگابایت باشد');
+  const button = $('send-image-button'); button.disabled = true; button.textContent = 'در حال بارگذاری...';
+  try {
+    const folder = currentChatType === 'global' ? 'global' : currentChatId;
+    const path = `${folder}/${currentUserData.uid}/${crypto.randomUUID()}.jpg`;
+    const { error: uploadError } = await supabase.storage.from('chat-media').upload(path, preparedImage.blob, { contentType: 'image/jpeg', upsert: false });
+    if (uploadError) throw uploadError;
+    const payload = { sender_id: currentUserData.uid, sender_name: userPrefs.anonymous ? 'کاربر ناشناس' : currentUserData.displayName, image_path: path, image_name: preparedImage.name, image_size: preparedImage.blob.size, text: '', status: 'sent' };
+    if (currentChatType === 'private') payload.chat_id = currentChatId;
+    if (replyTarget) payload.reply_to = { id: replyTarget.id, text: replyTarget.text || 'تصویر' };
+    const { error } = await supabase.from(messageTable()).insert(payload); if (error) throw error;
+    if (currentChatType === 'private') await supabase.from('chats').update({ last_message: '📷 تصویر', updated_at: new Date().toISOString() }).eq('id', currentChatId);
+    window.cancelImage(); window.clearReply(); showToast('تصویر در Supabase ذخیره و ارسال شد');
+  } catch (error) { console.error(error); showToast('بارگذاری عکس ناموفق بود: ' + error.message); }
+  finally { button.disabled = false; button.textContent = 'ارسال تصویر'; }
+};
+
+// زیرصفحه‌های تنظیمات
+window.renderSubMenu = key => {
+  const title = $('submenu-title'); const body = $('submenu-body'); body.replaceChildren(); let html = '';
+  if (key === 'account') {
+    title.textContent = 'حساب کاربری';
+    html = `<div class="setting-card"><h3>اطلاعات نمایه</h3><label>نام نمایشی</label><input class="plain-input" id="profile-name" value="${safe(currentUserData.displayName || '')}" maxlength="40"><label>بیوگرافی</label><input class="plain-input" id="profile-bio" value="${safe(currentUserData.bio || '')}" maxlength="120"><button class="btn full" onclick="saveProfile()">ذخیره نمایه</button></div><div class="setting-card"><h3>تغییر آیدی</h3><p>برای ورود با آیدی جدید، آدرس ورود داخلی حساب نیز به‌روزرسانی می‌شود. تأیید ایمیل باید در تنظیمات Auth خاموش باشد.</p><label>آیدی جدید</label><input class="plain-input" id="new-username" dir="ltr" value="${safe(currentUserData.username || '')}" maxlength="24"><button class="btn full" onclick="changeUsername()">تغییر آیدی</button></div><div class="setting-card"><h3>تغییر رمز عبور</h3><label>رمز فعلی (در صورت داشتن رمز)</label><input class="plain-input" id="old-password" type="password"><label>رمز جدید</label><input class="plain-input" id="new-password" type="password"><label>تکرار رمز جدید</label><input class="plain-input" id="confirm-password" type="password"><button class="btn full" onclick="changePassword()">ذخیره رمز عبور</button></div>`;
+  } else if (key === 'privacy') {
+    title.textContent = 'حریم خصوصی و چت ایمن';
+    html = `<div class="setting-card"><h3>نمایش و حریم خصوصی</h3><div class="setting-line"><span>نمایش نام من به‌صورت ناشناس در پیام‌های جدید</span><input class="switch" type="checkbox" id="pref-anonymous" ${userPrefs.anonymous ? 'checked' : ''} onchange="setPref('anonymous',this.checked)"></div><div class="setting-line"><span>ارسال رسید خوانده‌شدن پیام‌ها</span><input class="switch" type="checkbox" id="pref-read" ${userPrefs.readReceipts ? 'checked' : ''} onchange="setPref('readReceipts',this.checked)"></div><div class="setting-line"><span>نمایش وضعیت آنلاین در گفتگو</span><input class="switch" type="checkbox" id="pref-online" ${userPrefs.showOnline ? 'checked' : ''} onchange="setPref('showOnline',this.checked)"></div></div><div class="setting-card"><h3>توضیح امنیت</h3><p>حالت ناشناس فقط نام نمایشی پیام‌های جدید را پنهان می‌کند؛ شناسهٔ فرستنده برای مدیریت و امنیت ذخیره می‌شود. این نسخه رمزنگاری سرتاسری (E2EE) ندارد. دسترسی داده‌ها با سیاست‌های RLS در Supabase کنترل می‌شود.</p></div><div class="setting-card"><button class="btn outline full" onclick="openSubMenu('blocked')">مدیریت کاربران مسدودشده</button></div>`;
+  } else if (key === 'theme') {
+    title.textContent = 'تم و ظاهر'; const theme = document.documentElement.dataset.theme || 'aero';
+    html = `<div class="setting-card"><h3>انتخاب پوسته</h3><div class="setting-line"><span>مات Aero (پیشنهادی)</span><input type="radio" name="theme" ${theme === 'aero' ? 'checked' : ''} onchange="setTheme('aero')"></div><div class="setting-line"><span>روشن</span><input type="radio" name="theme" ${theme === 'light' ? 'checked' : ''} onchange="setTheme('light')"></div><div class="setting-line"><span>تیره</span><input type="radio" name="theme" ${theme === 'dark' ? 'checked' : ''} onchange="setTheme('dark')"></div></div><div class="setting-card"><h3>رنگ اصلی</h3><input type="color" id="primary-color" value="${userPrefs.primary || '#91d832'}" style="width:100%;height:48px;border:0;background:transparent" onchange="setPrimaryColor(this.value)"></div>`;
+  } else if (key === 'notifications') {
+    title.textContent = 'اعلان‌ها';
+    html = `<div class="setting-card"><div class="setting-line"><span>فعال بودن اعلان هنگام دریافت پیام در پس‌زمینه</span><input class="switch" type="checkbox" ${userPrefs.notifications ? 'checked' : ''} onchange="toggleNotifications(this.checked)"></div><p>اعلان مرورگر به اجازهٔ سیستم‌عامل و HTTPS نیاز دارد. برای اعلان زمان بسته بودن کامل مرورگر، سرویس Push جداگانه لازم است.</p><button class="btn outline full" onclick="testNotification()">آزمایش اعلان</button></div>`;
+  } else if (key === 'contacts') {
+    title.textContent = 'مخاطبان و دعوت';
+    html = `<div class="setting-card"><h3>به‌روزرسانی مخاطبان</h3><p>فهرست گفتگوها و کاربران از دیتابیس Supabase تازه‌سازی می‌شود.</p><button class="btn full" onclick="refreshContacts()"><i class="fa-solid fa-rotate"></i> به‌روزرسانی</button></div><div class="setting-card"><h3>دعوت از دوستان</h3><p>لینک برنامه را برای دوستانتان بفرستید.</p><button class="btn full" onclick="inviteFriends()"><i class="fa-solid fa-share-nodes"></i> ارسال دعوت</button><button class="btn outline full" onclick="copyInvite()">کپی لینک دعوت</button></div><div class="setting-card"><h3>جستجو با آیدی</h3><div class="field"><i class="fa-solid fa-at"></i><input id="search-username" dir="ltr" placeholder="مثلاً ali"></div><button class="btn full" onclick="searchUser()">جستجو</button><div id="search-results"></div></div>`;
+  } else if (key === 'search') {
+    title.textContent = 'جستجوی کاربر'; html = `<div class="setting-card"><div class="field"><i class="fa-solid fa-at"></i><input id="search-username" dir="ltr" placeholder="آیدی کاربر را وارد کنید"></div><button class="btn full" onclick="searchUser()">جستجو</button><div id="search-results"></div></div>`;
+  } else if (key === 'blocked') {
+    title.textContent = 'کاربران مسدودشده'; html = `<div class="setting-card"><p>کاربران مسدودشده از فهرست گفتگو و پیام‌های دریافتی شما پنهان می‌شوند.</p><div id="blocked-list"></div></div>`;
+  } else if (key === 'data') {
+    title.textContent = 'داده‌ها و ذخیره‌سازی'; html = `<div class="setting-card"><h3>وضعیت ذخیره‌سازی</h3><p>حساب‌ها و نمایه‌ها، گفتگوها، پیام‌ها، گزارش‌ها، وضعیت تماس‌ها، تنظیمات کاربری و فایل‌های تصویری در Supabase ذخیره می‌شوند. تنظیمات محلی فقط برای نمایش سریع نگهداری می‌شوند.</p><button class="btn outline full" onclick="showStorageInfo()">نمایش اطلاعات ذخیره‌سازی</button><button class="btn outline full" onclick="clearLocalPreferences()">بازنشانی حافظهٔ محلی</button><div id="storage-info" class="help"></div></div>`;
+  } else if (key === 'about') {
+    title.textContent = 'درباره لیمو چت'; html = `<div class="setting-card" style="text-align:center;padding:26px"><div class="brand-mark"><i class="fa-solid fa-lemon"></i></div><h2>لیمو چت</h2><p>نسخه 1.10</p><p><b>ساخته شده توسط امیرمحمد انصاری جابری</b></p><p>یک پیام‌رسان وب با رابط فارسی، پوسته مات Aero و پایگاه داده Supabase.</p></div>`;
+  }
+  body.innerHTML = html;
+  if (key === 'blocked') window.renderBlockedList();
+};
+window.setPref = async (key, value) => { userPrefs[key] = value; try { await cacheCurrentPrefs(); showToast('تنظیم در حساب شما ذخیره شد'); } catch (error) { showToast('ذخیره تنظیم ناموفق بود: ' + error.message); } };
+window.setTheme = async theme => { document.documentElement.dataset.theme = theme; userPrefs.theme = theme; try { await cacheCurrentPrefs(); showToast('پوسته تغییر کرد'); } catch (error) { showToast('ذخیره پوسته ناموفق بود: ' + error.message); } };
+window.setPrimaryColor = async color => { document.documentElement.style.setProperty('--primary', color); userPrefs.primary = color; try { await cacheCurrentPrefs(); } catch (error) { showToast('ذخیره رنگ ناموفق بود: ' + error.message); } };
+window.toggleNotifications = async enabled => {
+  if (enabled) { if (!('Notification' in window)) { showToast('مرورگر از اعلان پشتیبانی نمی‌کند'); return; } const permission = await Notification.requestPermission(); if (permission !== 'granted') { showToast('اجازه اعلان داده نشد'); return; } }
+  userPrefs.notifications = enabled; cacheCurrentPrefs(); showToast(enabled ? 'اعلان‌ها فعال شد' : 'اعلان‌ها غیرفعال شد');
+};
+window.testNotification = () => { if (!('Notification' in window) || !userPrefs.notifications || Notification.permission !== 'granted') return showToast('ابتدا اعلان را فعال کنید و اجازه مرورگر را بدهید'); showNotification('لیمو چت','اعلان آزمایشی فعال است'); showToast('در صورت پشتیبانی مرورگر، اعلان نمایش داده می‌شود'); };
+window.saveProfile = async () => {
+  const displayName = $('profile-name').value.trim(); const bio = $('profile-bio').value.trim(); if (!displayName) return showToast('نام نمایشی نمی‌تواند خالی باشد');
+  const { error } = await supabase.from('profiles').update({ display_name: displayName, bio }).eq('id', currentUserData.uid);
+  if (error) return showToast('ذخیره نمایه ناموفق بود: ' + error.message);
+  currentUserData.displayName = displayName; currentUserData.bio = bio; renderProfile(); window.closeSubMenu(); showToast('نمایه ذخیره شد');
+};
+window.changeUsername = async () => {
+  const newName = normalizeUsername($('new-username').value);
+  if (!/^[a-z0-9_.]{3,24}$/.test(newName)) return showToast('فرمت آیدی معتبر نیست');
+  if (newName === currentUserData.username) return showToast('آیدی تغییری نکرده است');
+  const { data: duplicate, error: lookupError } = await supabase.from('profiles').select('id').eq('username', newName).maybeSingle();
+  if (lookupError) return showToast('بررسی آیدی ناموفق بود: ' + lookupError.message);
+  if (duplicate && duplicate.id !== currentUserData.uid) return showToast('این آیدی قبلاً گرفته شده است');
+  try {
+    const { data: authUpdate, error: authError } = await supabase.auth.updateUser({ email: userEmail(newName) });
+    if (authError) throw authError;
+    if (authUpdate?.user) currentAuthUser = authUpdate.user;
+    const { error } = await supabase.from('profiles').update({ username: newName }).eq('id', currentUserData.uid);
+    if (error) throw error;
+    currentUserData.username = newName; renderProfile(); window.closeSubMenu(); showToast('آیدی تغییر کرد؛ از این پس با آیدی جدید وارد شوید.');
+  } catch (error) { console.error(error); showToast('تغییر آیدی ناموفق بود: ' + error.message); }
+};
+window.changePassword = async () => {
+  const oldPass = $('old-password').value; const newPass = $('new-password').value; const confirmPass = $('confirm-password').value;
+  if (newPass.length < 6) return showToast('رمز جدید حداقل ۶ کاراکتر باشد');
+  if (newPass !== confirmPass) return showToast('تکرار رمز جدید مطابقت ندارد');
+  try {
+    if (oldPass && currentAuthUser?.email) {
+      const { data: verified, error: verifyError } = await supabase.auth.signInWithPassword({ email: currentAuthUser.email, password: oldPass });
+      if (verifyError) throw new Error('رمز فعلی اشتباه است');
+      if (verified?.user) currentAuthUser = verified.user;
+    }
+    const targetEmail = currentAuthUser?.email?.endsWith('@limochat.app') ? currentAuthUser.email : userEmail(currentUserData.username);
+    const { data: updated, error } = await supabase.auth.updateUser({ email: targetEmail, password: newPass });
+    if (error) throw error;
+    if (updated?.user) currentAuthUser = updated.user;
+    $('old-password').value = ''; $('new-password').value = ''; $('confirm-password').value = ''; showToast('رمز ورود به‌روزرسانی شد');
+  } catch (error) { console.error(error); showToast('ذخیره رمز ناموفق بود: ' + error.message); }
+};
+window.refreshContacts = async () => { await loadChatList(); showToast('فهرست گفتگوها به‌روزرسانی شد'); };
+window.inviteFriends = async () => {
+  const data = { title: 'دعوت به لیمو چت', text: 'به لیمو چت بپیوندید:', url: 'https://limochat.pages.dev/' };
+  try { if (navigator.share) await navigator.share(data); else { await navigator.clipboard.writeText(data.text + ' ' + data.url); showToast('لینک دعوت کپی شد'); } }
+  catch (error) { if (error.name !== 'AbortError') showToast('ارسال دعوت انجام نشد'); }
+};
+window.copyInvite = async () => { try { await navigator.clipboard.writeText('https://limochat.pages.dev/'); showToast('لینک دعوت کپی شد'); } catch { showToast('کپی لینک در این مرورگر ممکن نیست'); } };
+window.renderBlockedList = async () => {
+  const root = $('blocked-list'); if (!root) return; root.replaceChildren();
+  if (!blockedUsers.length) { root.textContent = 'کاربر مسدودشده‌ای ندارید.'; return; }
+  const { data: profiles } = await supabase.from('profiles').select('id,username,display_name').in('id', blockedUsers);
+  const byId = new Map((profiles || []).map(profile => [profile.id, profile]));
+  for (const uid of blockedUsers) {
+    const user = byId.get(uid) || { username: uid.slice(0,8), display_name: 'کاربر' };
+    const row = document.createElement('div'); row.className = 'result-card'; const info = document.createElement('div'); info.className = 'result-info'; info.textContent = (user.display_name || 'کاربر') + '  @' + (user.username || '');
+    const button = document.createElement('button'); button.className = 'btn outline'; button.textContent = 'رفع مسدودی'; button.onclick = () => window.unblockUser(uid);
+    row.append(info, button); root.appendChild(row);
+  }
+};
+window.blockUser = async (uid, name = 'کاربر') => {
+  if (!uid || uid === currentUserData.uid) return;
+  if (!confirm(`${name} مسدود شود؟`)) return;
+  if (blockedUsers.includes(uid)) return showToast('این کاربر از قبل مسدود است');
+  const { error } = await supabase.from('user_blocks').insert({ user_id: currentUserData.uid, blocked_user_id: uid });
+  if (error) return showToast('ثبت مسدودی ناموفق بود: ' + error.message);
+  if (!blockedUsers.includes(uid)) blockedUsers.push(uid);
+  showToast('کاربر مسدود شد'); if (currentChatParticipants.includes(uid)) window.closeChatRoom(); window.closeSubMenu(); await loadChatList();
+};
+window.unblockUser = async uid => {
+  const { error } = await supabase.from('user_blocks').delete().eq('user_id', currentUserData.uid).eq('blocked_user_id', uid);
+  if (error) return showToast('رفع مسدودی ناموفق بود: ' + error.message);
+  blockedUsers = blockedUsers.filter(value => value !== uid); window.renderBlockedList(); await loadChatList(); showToast('مسدودی برداشته شد');
+};
+async function submitReport(report) {
+  const reason = String(report.reason || 'گزارش کاربر').slice(0,500);
+  const record = { reporter_id: currentUserData.uid, reporter_username: currentUserData.username, type: report.type, target_uid: report.targetUid || null, target_name: report.targetName || null, message_id: report.messageId || null, chat_id: report.chatId && report.chatId !== 'global' ? report.chatId : null, reason, content: (report.content || '').slice(0,500), destination: '@Report', status: 'new' };
+  const { error } = await supabase.from('reports').insert(record);
+  if (error) { console.error(error); showToast('ثبت گزارش در دیتابیس ناموفق بود: ' + error.message); return; }
+  showToast('گزارش در دیتابیس Supabase ثبت شد');
+  const text = `گزارش Limo Chat\nنوع: ${report.type}\nگزارش‌دهنده: @${currentUserData.username}\nکاربر هدف: ${report.targetName || report.targetUid || 'نامشخص'}\nدلیل: ${reason}\nمحتوا: ${(report.content || '').slice(0,500)}\nشناسه گفتگو: ${report.chatId || '-'}`;
+  const telegramUrl = 'https://t.me/share/url?url=' + encodeURIComponent('https://limochat.pages.dev/') + '&text=' + encodeURIComponent(text);
+  window.open(telegramUrl, '_blank', 'noopener');
+}
+window.reportUser = async (uid, name) => { const reason = prompt(`دلیل گزارش ${name || 'کاربر'} چیست؟`, 'رفتار نامناسب'); if (!reason) return; await submitReport({ type: 'user', targetUid: uid, targetName: name, reason, chatId: currentChatId || '' }); };
+window.showStorageInfo = async () => {
+  let cache = 'برآورد مرورگر در دسترس نیست';
+  try { if (navigator.storage?.estimate) { const estimate = await navigator.storage.estimate(); cache = `استفاده‌شده: ${formatBytes(estimate.usage || 0)} / سهمیه: ${formatBytes(estimate.quota || 0)}`; } } catch {}
+  $('storage-info').textContent = cache + ' · سرور دیتابیس: Supabase';
+};
+window.clearLocalPreferences = () => {
+  if (!confirm('کش محلی تنظیمات و وضعیت گفتگو پاک شود؟ داده‌های حساب و پیام‌های سرور حذف نمی‌شوند.')) return;
+  [prefsKey(),pinKey(),hiddenKey(),botKey()].forEach(key => localStorage.removeItem(key));
+  showToast('حافظهٔ محلی پاک شد؛ داده‌های Supabase حفظ شدند'); location.reload();
+};
+
+// ربات محلی: متن‌های آن هم در جدول bot_messages حساب ذخیره می‌شوند.
+async function loadBotMessages() {
+  const { data, error } = await supabase.from('bot_messages').select('*').eq('user_id', currentUserData.uid).order('created_at', { ascending: true }).limit(150);
+  if (error) { console.warn(error); botMessages = []; }
+  else botMessages = (data || []).map(row => ({ id: row.id, text: row.text, senderId: row.sender_role === 'user' ? currentUserData.uid : 'bot', senderName: row.sender_role === 'user' ? currentUserData.displayName : 'لیمو بات', createdAt: row.created_at }));
+  if (!botMessages.length) {
+    const greeting = 'سلام! من لیمو بات هستم 🍋\nمی‌توانم درباره امکانات برنامه راهنمایی‌تان کنم. فعلاً پاسخ‌ها به‌صورت محلی و از پیش تعریف‌شده تولید می‌شوند.';
+    const { data: inserted } = await supabase.from('bot_messages').insert({ user_id: currentUserData.uid, sender_role: 'bot', text: greeting }).select('*').single();
+    if (inserted) botMessages = [{ id: inserted.id, text: inserted.text, senderId: 'bot', senderName: 'لیمو بات', createdAt: inserted.created_at }];
+  }
+  renderBotMessages();
+}
+function renderBotMessages() {
+  const root = $('messages'); root.replaceChildren();
+  botMessages.forEach(message => {
+    const wrap = document.createElement('div'); wrap.className = 'msg-wrap ' + (message.senderId === currentUserData.uid ? 'me' : 'them');
+    const bubble = document.createElement('div'); bubble.className = 'message'; const text = document.createElement('div'); text.className = 'msg-text'; text.textContent = message.text;
+    const meta = document.createElement('div'); meta.className = 'msg-meta'; meta.textContent = displayTime(message.createdAt); bubble.append(text, meta); wrap.appendChild(bubble); root.appendChild(wrap);
+  });
+  root.scrollTop = root.scrollHeight;
+}
+async function addBotMessage(text, fromMe) {
+  const role = fromMe ? 'user' : 'bot';
+  const { data, error } = await supabase.from('bot_messages').insert({ user_id: currentUserData.uid, sender_role: role, text }).select('*').single();
+  if (error) { showToast('ذخیره پیام لیمو بات در دیتابیس ناموفق بود'); return; }
+  botMessages.push({ id: data.id, text: data.text, senderId: fromMe ? currentUserData.uid : 'bot', senderName: fromMe ? currentUserData.displayName : 'لیمو بات', createdAt: data.created_at });
+  botMessages = botMessages.slice(-150); renderBotMessages();
+  if (fromMe) {
+    setTimeout(async () => {
+      const answer = botReply(text);
+      const { data: answerRow, error: answerError } = await supabase.from('bot_messages').insert({ user_id: currentUserData.uid, sender_role: 'bot', text: answer }).select('*').single();
+      if (!answerError && answerRow) { botMessages.push({ id: answerRow.id, text: answerRow.text, senderId: 'bot', senderName: 'لیمو بات', createdAt: answerRow.created_at }); botMessages = botMessages.slice(-150); renderBotMessages(); }
+    }, 450);
+  }
+}
+function botReply(text) {
+  const value = text.toLowerCase();
+  if (/سلام|درود|hi|hello/.test(value)) return 'سلام! خوشحالم که اینجایی 😊 چه کمکی از دستم برمی‌آید؟';
+  if (/تنظیم|تم|ظاهر/.test(value)) return 'برای تغییر ظاهر به تنظیمات ← تم و ظاهر برو و پوسته Aero، روشن یا تیره را انتخاب کن.';
+  if (/عکس|تصویر/.test(value)) return 'در گفتگوی خصوصی یا عمومی روی آیکون تصویر بزن. عکس در مرورگر فشرده و در فضای خصوصی Supabase Storage ذخیره می‌شود.';
+  if (/تماس|زنگ/.test(value)) return 'در گفتگوی خصوصی، آیکون تلفن بالای صفحه را بزن. تماس به اجازه میکروفون و تنظیمات Realtime و جداول calls نیاز دارد.';
+  if (/امن|ناشناس|حریم/.test(value)) return 'در تنظیمات ← حریم خصوصی می‌توانی نمایش ناشناس نام و رسید خواندن را مدیریت کنی. این نسخه رمزنگاری سرتاسری ندارد.';
+  if (/گزارش|مسدود/.test(value)) return 'برای گزارش یا مسدودسازی، روی گفتگو چند لحظه نگه دار یا منوی سه‌نقطه را در صفحه چت باز کن.';
+  if (/آیدی|رمز|حساب/.test(value)) return 'از تنظیمات ← حساب کاربری می‌توانی نام نمایشی، آیدی و رمز ورود را مدیریت کنی.';
+  return 'متوجه شدم 🌱 من نسخه راهنمای محلی لیمو بات هستم و هنوز به مدل هوش مصنوعی آنلاین متصل نیستم. می‌توانی درباره تنظیمات، تماس، عکس، امنیت یا حساب کاربری سؤال کنی.';
+}
+
+// تماس صوتی WebRTC؛ سیگنالینگ و نامزدهای ICE در جداول Supabase ذخیره می‌شوند.
+function otherParticipant() { return currentChatParticipants.find(uid => uid !== currentUserData.uid); }
+function showCallScreen(name, status, incoming = false) {
+  $('call-name').textContent = name || 'کاربر'; $('call-status').textContent = status;
+  $('incoming-actions').style.display = incoming ? 'flex' : 'none'; $('active-call-controls').style.display = incoming ? 'none' : 'flex'; $('call-overlay').classList.add('show');
+}
+function cleanupCall(updateServer = true) {
+  if (callChannel) removeChannel(callChannel); callChannel = null;
+  if (iceChannel) removeChannel(iceChannel); iceChannel = null;
+  if (callPc) { callPc.close(); callPc = null; }
+  if (localStream) { localStream.getTracks().forEach(track => track.stop()); localStream = null; }
+  $('remote-audio').srcObject = null; $('call-overlay').classList.remove('show');
+  callRow = null; callRole = null; callMuted = false; pendingIncoming = null; seenIceCandidates = new Set(); pendingIceCandidates = [];
+}
+function makePeerConnection() {
+  const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+  pc.onicecandidate = async event => {
+    if (event.candidate && callRow) {
+      const { error } = await supabase.from('call_ice_candidates').insert({ call_id: callRow.id, sender_id: currentUserData.uid, side: callRole, candidate: event.candidate.toJSON() });
+      if (error) console.warn('ICE candidate:', error.message);
+    }
+  };
+  pc.ontrack = event => { const audio = $('remote-audio'); audio.srcObject = event.streams[0]; audio.play().catch(() => {}); };
+  pc.onconnectionstatechange = () => {
+    if (pc.connectionState === 'connected') $('call-status').textContent = 'تماس برقرار است';
+    if (['failed','disconnected'].includes(pc.connectionState)) $('call-status').textContent = 'اتصال ناپایدار است';
+  };
+  return pc;
+}
+async function listenForCandidates(side) {
+  if (iceChannel) removeChannel(iceChannel); seenIceCandidates = new Set();
+  const applyCandidate = async row => {
+    if (!row?.candidate || !callPc || seenIceCandidates.has(row.id)) return;
+    seenIceCandidates.add(row.id);
+    if (!callPc.remoteDescription) { pendingIceCandidates.push(row.candidate); return; }
+    try { await callPc.addIceCandidate(new RTCIceCandidate(row.candidate)); } catch (error) { console.warn('Applying ICE candidate:', error); }
+  };
+  const { data, error } = await supabase.from('call_ice_candidates').select('*').eq('call_id', callRow.id).eq('side', side).order('created_at', { ascending: true });
+  if (error) throw error;
+  for (const row of data || []) await applyCandidate(row);
+  iceChannel = supabase.channel('ice-' + callRow.id + '-' + side)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'call_ice_candidates', filter: `call_id=eq.${callRow.id}` }, payload => { if (payload.new.side === side) applyCandidate(payload.new); })
+    .subscribe();
+}
+async function flushPendingIceCandidates() {
+  if (!callPc?.remoteDescription || !pendingIceCandidates.length) return;
+  const queued = pendingIceCandidates.splice(0);
+  for (const candidate of queued) { try { await callPc.addIceCandidate(new RTCIceCandidate(candidate)); } catch (error) { console.warn('Queued ICE candidate:', error); } }
+}
+function watchCallDocument() {
+  if (callChannel) removeChannel(callChannel);
+  callChannel = supabase.channel('call-' + callRow.id)
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'calls', filter: `id=eq.${callRow.id}` }, async payload => {
+      const data = payload.new;
+      if (callRole === 'caller' && data.answer && callPc && !callPc.currentRemoteDescription) {
+        try { await callPc.setRemoteDescription(new RTCSessionDescription(data.answer)); await flushPendingIceCandidates(); $('call-status').textContent = 'در حال اتصال...'; } catch (error) { console.error(error); }
+      }
+      if (['ended','declined'].includes(data.status)) { showToast(data.status === 'declined' ? 'تماس رد شد' : 'تماس پایان یافت'); cleanupCall(false); }
+    }).subscribe();
+}
+window.startVoiceCall = async () => {
+  const callee = otherParticipant();
+  if (!callee) return showToast('تماس فقط در گفتگوی خصوصی دونفره فعال است');
+  if (!window.isSecureContext) return showToast('تماس صوتی به HTTPS نیاز دارد');
+  if (!navigator.mediaDevices?.getUserMedia) return showToast('مرورگر به میکروفون دسترسی نمی‌دهد');
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false }); callRole = 'caller';
+    callPc = makePeerConnection(); localStream.getTracks().forEach(track => callPc.addTrack(track, localStream));
+    const { data: call, error } = await supabase.from('calls').insert({ caller_id: currentUserData.uid, caller_name: currentUserData.displayName, callee_id: callee, chat_id: currentChatId, status: 'ringing' }).select('*').single();
+    if (error) throw error; callRow = call;
+    await listenForCandidates('callee');
+    const offer = await callPc.createOffer(); await callPc.setLocalDescription(offer);
+    const { error: updateError } = await supabase.from('calls').update({ offer: { type: offer.type, sdp: offer.sdp } }).eq('id', callRow.id);
+    if (updateError) throw updateError;
+    createAvatar($('call-avatar'), currentChatAvatar || currentChatName); showCallScreen(currentChatName, 'در حال تماس...'); watchCallDocument();
+  } catch (error) { console.error(error); cleanupCall(); showToast('شروع تماس ناموفق بود: ' + error.message); }
+};
+function watchIncomingCalls() {
+  if (incomingCallChannel) removeChannel(incomingCallChannel);
+  const receiveCall = row => {
+    if (pendingIncoming?.id === row.id || row.status !== 'ringing') return;
+    pendingIncoming = row; createAvatar($('call-avatar'), row.caller_name || 'ل'); showCallScreen(row.caller_name || 'تماس ورودی', 'در حال تماس...', true);
+  };
+  supabase.from('calls').select('*').eq('callee_id', currentUserData.uid).eq('status','ringing').then(({ data, error }) => { if (!error) (data || []).forEach(receiveCall); });
+  incomingCallChannel = supabase.channel('incoming-calls-' + currentUserData.uid)
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'calls', filter: `callee_id=eq.${currentUserData.uid}` }, payload => receiveCall(payload.new))
+    .subscribe();
+}
+window.acceptIncomingCall = async () => {
+  if (!pendingIncoming) return;
+  try {
+    const { data: call, error } = await supabase.from('calls').select('*').eq('id', pendingIncoming.id).single();
+    if (error) throw error;
+    if (!call.offer) { showToast('تماس هنوز در حال آماده‌سازی است؛ چند لحظه بعد دوباره پاسخ دهید.'); return; }
+    callRow = call; callRole = 'callee'; localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    callPc = makePeerConnection(); localStream.getTracks().forEach(track => callPc.addTrack(track, localStream));
+    await listenForCandidates('caller'); await callPc.setRemoteDescription(new RTCSessionDescription(call.offer)); await flushPendingIceCandidates();
+    const answer = await callPc.createAnswer(); await callPc.setLocalDescription(answer);
+    const { error: updateError } = await supabase.from('calls').update({ answer: { type: answer.type, sdp: answer.sdp }, status: 'active' }).eq('id', callRow.id);
+    if (updateError) throw updateError;
+    watchCallDocument(); $('incoming-actions').style.display = 'none'; $('active-call-controls').style.display = 'flex'; $('call-status').textContent = 'تماس برقرار شد';
+  } catch (error) { console.error(error); showToast('پاسخ به تماس ممکن نشد: ' + error.message); cleanupCall(); }
+};
+window.declineIncomingCall = async () => {
+  if (pendingIncoming) await supabase.from('calls').update({ status: 'declined', ended_at: new Date().toISOString() }).eq('id', pendingIncoming.id);
+  cleanupCall(false);
+};
+window.endCall = async () => {
+  if (callRow) await supabase.from('calls').update({ status: 'ended', ended_at: new Date().toISOString() }).eq('id', callRow.id);
+  cleanupCall(false);
+};
+window.toggleMute = () => {
+  if (!localStream) return; callMuted = !callMuted; localStream.getAudioTracks().forEach(track => { track.enabled = !callMuted; });
+  $('mute-button').innerHTML = callMuted ? '<i class="fa-solid fa-microphone-slash"></i>' : '<i class="fa-solid fa-microphone"></i>';
+};
+window.toggleSpeaker = () => { callSpeaker = !callSpeaker; $('remote-audio').muted = !callSpeaker; $('speaker-button').style.opacity = callSpeaker ? '1' : '.5'; };
+window.refreshCalls = async () => {
+  const root = $('calls-list'); root.innerHTML = '<div class="empty-state">در حال بارگذاری تماس‌ها...</div>';
+  const { data, error } = await supabase.from('calls').select('*').or(`caller_id.eq.${currentUserData.uid},callee_id.eq.${currentUserData.uid}`).order('created_at', { ascending: false }).limit(100);
+  if (error) { console.error(error); root.innerHTML = '<div class="empty-state"><p>سابقه تماس قابل دریافت نیست: ' + safe(error.message) + '</p></div>'; return; }
+  root.replaceChildren();
+  if (!data?.length) { root.innerHTML = '<div class="empty-state"><i class="fa-solid fa-phone"></i><p>هنوز سابقه تماسی ندارید.</p></div>'; return; }
+  data.forEach(call => {
+    const row = document.createElement('div'); row.className = 'call-row'; const avatar = document.createElement('div'); avatar.className = 'avatar'; avatar.textContent = '☎';
+    const info = document.createElement('div'); info.className = 'info'; const title = document.createElement('b'); title.textContent = call.caller_id === currentUserData.uid ? 'تماس خروجی' : 'تماس ورودی';
+    const small = document.createElement('small'); small.textContent = `${call.status || 'نامشخص'} · ${displayTime(call.created_at)}`; info.append(title, small);
+    const icon = document.createElement('button'); icon.innerHTML = '<i class="fa-solid fa-phone"></i>'; icon.onclick = () => showToast('برای تماس مجدد، گفتگوی خصوصی کاربر را باز کنید'); row.append(avatar, info, icon); root.appendChild(row);
+  });
+};
+
+// بازیابی رنگ/تم در اولین نمایش صفحه
+if (userPrefs.theme) document.documentElement.dataset.theme = userPrefs.theme;
+if (userPrefs.primary) document.documentElement.style.setProperty('--primary', userPrefs.primary);
 </script>
 </body>
 </html>
