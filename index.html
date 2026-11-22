@@ -187,6 +187,91 @@ button{cursor:pointer}
 .field input:focus,.plain-input:focus,.message-input:focus{transition:box-shadow .2s ease,border-color .2s ease}
 @media(hover:hover){.btn:hover,.fab:hover{filter:brightness(1.04);box-shadow:0 10px 24px rgba(100,180,38,.24)}}
 
+
+/* v1.12 accent system, fluid motion, stable chat */
+:root{--ease-out:cubic-bezier(.22,1,.36,1);--ease-spring:cubic-bezier(.34,1.56,.64,1)}
+html[data-theme]{--accent-light:color-mix(in srgb,var(--primary) 68%,#fff);--primary-dark:color-mix(in srgb,var(--primary) 62%,#000);--primary-soft:color-mix(in srgb,var(--primary) 16%,transparent);--out:color-mix(in srgb,var(--primary) 30%,#fff);--on-primary:#1b2a12}
+html[data-theme="dark"]{--primary-dark:color-mix(in srgb,var(--primary) 78%,#fff);--primary-soft:color-mix(in srgb,var(--primary) 18%,transparent);--out:color-mix(in srgb,var(--primary) 34%,#1a251a)}
+.splash{background:linear-gradient(145deg,var(--accent-light),color-mix(in srgb,var(--primary) 72%,#000))}
+.brand-mark,.avatar,.fab{background:linear-gradient(145deg,var(--accent-light),var(--primary))}
+.btn,.badge-count,.send-btn{color:var(--on-primary)}
+.btn{box-shadow:0 8px 18px color-mix(in srgb,var(--primary) 30%,transparent)}
+.fab{box-shadow:0 10px 25px color-mix(in srgb,var(--primary) 40%,transparent)}
+.send-btn{box-shadow:0 5px 14px color-mix(in srgb,var(--primary) 32%,transparent)}
+.btn,.icon-btn,.setting-row,.nav-item,.action-row,.send-btn,.call-control,.avatar-choice{position:relative;overflow:hidden}
+.fab{overflow:hidden}
+.ripple{position:absolute;border-radius:50%;background:currentColor;opacity:.22;transform:scale(0);animation:ripple .65s ease-out forwards;pointer-events:none}
+@keyframes ripple{to{transform:scale(1);opacity:0}}
+html.theme-anim #app,html.theme-anim #app *{transition:background-color .4s ease,color .4s ease,border-color .4s ease,box-shadow .4s ease!important}
+
+/* screens */
+.screen{transform:translateX(26px) scale(.985);transition:opacity .32s ease,transform .5s var(--ease-out),visibility 0s linear .5s}
+.screen.active{transform:none;transition:opacity .32s ease,transform .5s var(--ease-out),visibility 0s}
+.submenu{transition:transform .5s var(--ease-out)}
+.submenu.active .setting-card{animation:rowIn .5s var(--ease-out) backwards}
+.submenu.active .setting-card:nth-child(2){animation-delay:.05s}
+.submenu.active .setting-card:nth-child(3){animation-delay:.1s}
+.submenu.active .setting-card:nth-child(4){animation-delay:.15s}
+.submenu.active .setting-card:nth-child(n+5){animation-delay:.2s}
+@keyframes rowIn{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+.row-enter{animation:rowIn .55s var(--ease-out) backwards}
+
+/* overlays */
+.overlay{display:flex;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s ease,visibility 0s linear .3s}
+.overlay.show{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .3s ease,visibility 0s}
+.overlay .sheet{animation:none;transform:translateY(105%);transition:transform .5s var(--ease-out)}
+.overlay.show .sheet{transform:none}
+.overlay.show .action-row{animation:rowIn .4s var(--ease-out) backwards}
+.overlay.show .action-row:nth-child(2){animation-delay:.04s}
+.overlay.show .action-row:nth-child(3){animation-delay:.08s}
+.overlay.show .action-row:nth-child(4){animation-delay:.12s}
+.overlay.show .action-row:nth-child(n+5){animation-delay:.16s}
+.action-row{transition:transform .2s var(--ease-out),background-color .2s}
+.action-row:active{transform:scale(.97)}
+.call-overlay{display:flex;opacity:0;visibility:hidden;pointer-events:none;transform:scale(1.06);background:linear-gradient(160deg,var(--accent-light),color-mix(in srgb,var(--primary) 55%,#000));transition:opacity .35s ease,transform .5s var(--ease-out),visibility 0s linear .5s}
+.call-overlay.show{opacity:1;visibility:visible;pointer-events:auto;transform:none;transition:opacity .35s ease,transform .5s var(--ease-out),visibility 0s}
+.call-overlay.show .call-person .avatar{animation:pulseRing 2.2s ease-out infinite}
+@keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(255,255,255,.35)}100%{box-shadow:0 0 0 26px rgba(255,255,255,0)}}
+.image-preview{display:flex;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s ease,visibility 0s linear .3s}
+.image-preview.show{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .3s ease,visibility 0s}
+.image-card{transform:translateY(24px) scale(.94);transition:transform .5s var(--ease-spring)}
+.image-preview.show .image-card{transform:none}
+.toast{transition:transform .5s var(--ease-spring)}
+
+/* navigation and controls */
+.nav-item i{transition:transform .35s var(--ease-spring)}
+.nav-item.active i{transform:translateY(-2px) scale(1.15)}
+.chat-row{transition:background-color .25s ease,transform .25s var(--ease-out)}
+
+/* messages: stable layout, animate only new bubbles */
+.messages{scroll-behavior:auto;overscroll-behavior:contain;overflow-anchor:none;contain:layout style}
+.message{animation:none;transition:transform .2s var(--ease-out)}
+.message:active{transform:scale(.985)}
+.msg-wrap.me .message{transform-origin:bottom left}
+.msg-wrap.them .message{transform-origin:bottom right}
+.message.enter{animation:msgPop .42s var(--ease-spring) backwards}
+@keyframes msgPop{from{opacity:0;transform:translateY(14px) scale(.9)}to{opacity:1;transform:none}}
+.msg-wrap.leaving{pointer-events:none;animation:msgOut .26s ease forwards}
+@keyframes msgOut{to{opacity:0;transform:scale(.9)}}
+.reaction{animation:msgPop .35s var(--ease-spring) backwards}
+.img-frame{position:relative;display:block;width:min(230px,65vw);aspect-ratio:4/3;margin:2px 0 5px;border-radius:11px;overflow:hidden;cursor:pointer;background:linear-gradient(110deg,var(--primary-soft) 30%,transparent 50%,var(--primary-soft) 70%) 0 0/200% 100%;animation:shimmer 1.4s linear infinite}
+.img-frame.loaded{animation:none;background:var(--primary-soft)}
+.img-frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .4s ease}
+.img-frame.loaded img{opacity:1}
+@keyframes shimmer{to{background-position:-200% 0}}
+
+/* avatar picker and swatches */
+.avatar-group-title{font-size:11px;color:var(--muted);font-weight:800;margin:12px 2px 8px}
+.avatar-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.avatar-choice{aspect-ratio:1;border:2px solid transparent;padding:3px;border-radius:24px;background:var(--bg);transition:transform .35s var(--ease-spring),border-color .25s,box-shadow .25s}
+.avatar-choice img{width:100%;height:100%;display:block;border-radius:19px}
+.avatar-choice.selected{border-color:var(--primary);box-shadow:0 6px 18px color-mix(in srgb,var(--primary) 35%,transparent);transform:scale(1.06)}
+.avatar-choice:active{transform:scale(.94)}
+.swatch-row{display:flex;flex-wrap:wrap;gap:12px;margin:6px 0 14px}
+.swatch{width:38px;height:38px;border-radius:50%;border:3px solid var(--panel-solid);box-shadow:0 0 0 1px var(--border);transition:transform .3s var(--ease-spring),box-shadow .25s}
+.swatch.selected{box-shadow:0 0 0 3px var(--text);transform:scale(1.12)}
+.color-input{width:100%;height:48px;border:0;background:transparent;margin-bottom:6px}
+@media(prefers-reduced-motion:reduce){.screen,.overlay .sheet,.call-overlay,.image-card{transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
@@ -195,7 +280,7 @@ button{cursor:pointer}
   <section id="screen-auth" class="screen auth-screen"><div class="auth-card"><div class="brand-mark"><i class="fa-solid fa-lemon"></i></div><h1 class="auth-title" id="auth-title">ورود به لیمو چت</h1><p class="auth-sub" id="auth-sub">با آیدی و رمز عبور یا حساب گوگل وارد شوید.</p><div class="field"><i class="fa-solid fa-user"></i><input id="auth-username" autocomplete="username" placeholder="آیدی کاربری" dir="ltr"></div><div class="field"><i class="fa-solid fa-lock"></i><input id="auth-password" type="password" autocomplete="current-password" placeholder="رمز عبور (حداقل ۶ کاراکتر)" dir="ltr"></div><button class="btn full" id="auth-submit" onclick="handleAuth()">ورود</button><button class="btn full google" onclick="loginWithGoogle()"><i class="fa-brands fa-google"></i> ورود با حساب گوگل</button><p class="auth-switch" onclick="toggleAuthMode()"><span id="auth-switch-text">حساب ندارید؟ <b>ثبت‌نام کنید</b></span></p><p class="tiny-note">ورود با آیدی و رمز عبور یا حساب گوگل انجام می‌شود.</p></div></section>
   <section id="screen-main" class="screen"><header class="topbar"><div class="top-title">لیمو چت</div><div class="top-actions"><button class="icon-btn" aria-label="جستجو" onclick="openSubMenu('search')"><i class="fa-solid fa-magnifying-glass"></i></button><button class="icon-btn" aria-label="مخاطبان" onclick="openSubMenu('contacts')"><i class="fa-solid fa-user-group"></i></button><button class="icon-btn" aria-label="تنظیمات" onclick="switchTab('settings')"><i class="fa-solid fa-gear"></i></button></div></header><div class="scroll-area" id="chat-list"></div><button class="fab" onclick="openSubMenu('search')" aria-label="شروع گفتگو"><i class="fa-solid fa-pen"></i></button></section>
   <section id="screen-calls" class="screen"><header class="topbar"><div class="top-title" style="color:var(--text)">تماس‌ها</div><button class="icon-btn" onclick="refreshCalls()"><i class="fa-solid fa-rotate"></i></button></header><div class="calls-content" id="calls-list"><div class="empty-state"><i class="fa-solid fa-phone"></i><p>تماس‌های صوتی یک‌به‌یک در این بخش نمایش داده می‌شوند.</p></div></div></section>
-  <section id="screen-settings" class="screen"><header class="topbar"><div class="top-title" style="color:var(--text)">تنظیمات</div></header><div class="settings-scroll"><div class="profile-card" onclick="openSubMenu('account')"><div class="avatar" id="settings-avatar">ل</div><div class="profile-copy"><strong id="settings-name">کاربر لیمو</strong><small id="settings-username">@user</small></div><i class="fa-solid fa-chevron-left" style="color:var(--muted)"></i></div><div class="section-label">حساب و حریم خصوصی</div><div class="setting-row" onclick="openSubMenu('account')"><i class="fa-solid fa-user-gear"></i><span>حساب کاربری، آیدی و رمز عبور</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('privacy')"><i class="fa-solid fa-shield-halved"></i><span>حریم خصوصی و چت ایمن</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('blocked')"><i class="fa-solid fa-ban"></i><span>کاربران مسدودشده</span><i class="fa-solid fa-chevron-left"></i></div><div class="section-label">شخصی‌سازی و برنامه</div><div class="setting-row" onclick="openSubMenu('theme')"><i class="fa-solid fa-palette"></i><span>تم مات Aero و ظاهر</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('notifications')"><i class="fa-solid fa-bell"></i><span>اعلان‌ها</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('contacts')"><i class="fa-solid fa-address-book"></i><span>مخاطبان و دعوت دوستان</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('data')"><i class="fa-solid fa-database"></i><span>داده‌ها و ذخیره‌سازی</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('about')"><i class="fa-solid fa-circle-info"></i><span>درباره لیمو چت</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="logout()" style="color:var(--danger)"><i class="fa-solid fa-right-from-bracket" style="color:var(--danger)"></i><span>خروج از حساب</span></div><p class="tiny-note">Limo Chat v1.11</p></div></section>
+  <section id="screen-settings" class="screen"><header class="topbar"><div class="top-title" style="color:var(--text)">تنظیمات</div></header><div class="settings-scroll"><div class="profile-card" onclick="openSubMenu('account')"><div class="avatar" id="settings-avatar">ل</div><div class="profile-copy"><strong id="settings-name">کاربر لیمو</strong><small id="settings-username">@user</small></div><i class="fa-solid fa-chevron-left" style="color:var(--muted)"></i></div><div class="section-label">حساب و حریم خصوصی</div><div class="setting-row" onclick="openSubMenu('account')"><i class="fa-solid fa-user-gear"></i><span>حساب کاربری، آیدی و رمز عبور</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('privacy')"><i class="fa-solid fa-shield-halved"></i><span>حریم خصوصی و چت ایمن</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('blocked')"><i class="fa-solid fa-ban"></i><span>کاربران مسدودشده</span><i class="fa-solid fa-chevron-left"></i></div><div class="section-label">شخصی‌سازی و برنامه</div><div class="setting-row" onclick="openSubMenu('theme')"><i class="fa-solid fa-palette"></i><span>تم مات Aero و ظاهر</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('notifications')"><i class="fa-solid fa-bell"></i><span>اعلان‌ها</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('contacts')"><i class="fa-solid fa-address-book"></i><span>مخاطبان و دعوت دوستان</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('data')"><i class="fa-solid fa-database"></i><span>داده‌ها و ذخیره‌سازی</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('about')"><i class="fa-solid fa-circle-info"></i><span>درباره لیمو چت</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="logout()" style="color:var(--danger)"><i class="fa-solid fa-right-from-bracket" style="color:var(--danger)"></i><span>خروج از حساب</span></div><p class="tiny-note">Limo Chat v1.12</p></div></section>
   <section id="screen-chat-room" class="screen"><header class="chat-header"><button class="icon-btn" onclick="closeChatRoom()"><i class="fa-solid fa-arrow-right"></i></button><div class="avatar" id="room-avatar">ل</div><div class="chat-head-info"><div class="chat-head-name" id="room-name">گفتگو</div><div class="chat-head-status" id="room-status">پیام‌رسانی</div></div><div class="chat-header-actions"><button class="icon-btn" id="call-button" onclick="startVoiceCall()" title="تماس صوتی"><i class="fa-solid fa-phone"></i></button><button class="icon-btn" onclick="openChatActions()" title="گزینه‌ها"><i class="fa-solid fa-ellipsis-vertical"></i></button></div></header><div class="messages" id="messages"></div><div class="reply-preview" id="reply-preview"><span id="reply-preview-text"></span><button class="icon-btn" style="width:25px;height:25px" onclick="clearReply()"><i class="fa-solid fa-xmark"></i></button></div><div class="input-area"><button class="attach-btn" onclick="document.getElementById('image-file').click()" title="ارسال عکس"><i class="fa-regular fa-image"></i></button><input id="image-file" type="file" accept="image/*" hidden onchange="chooseImage(event)"><input class="message-input" id="message-input" placeholder="پیام بنویسید..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"><button class="send-btn" onclick="sendMessage()" aria-label="ارسال"><i class="fa-solid fa-paper-plane"></i></button></div></section>
   <nav class="bottom-nav hidden" id="bottom-nav" aria-hidden="true"><div class="nav-item active" onclick="switchTab('main',this)"><i class="fa-solid fa-comments"></i><span>چت‌ها</span></div><div class="nav-item" onclick="switchTab('calls',this)"><i class="fa-solid fa-phone"></i><span>تماس‌ها</span></div><div class="nav-item" onclick="switchTab('settings',this)"><i class="fa-solid fa-gear"></i><span>تنظیمات</span></div></nav>
   <div class="submenu" id="submenu"><header class="submenu-head"><button onclick="closeSubMenu()"><i class="fa-solid fa-arrow-right"></i></button><span id="submenu-title">تنظیمات</span></header><div class="submenu-body" id="submenu-body"></div></div>
@@ -247,6 +332,15 @@ let bootstrapPending = true;
 let splashStartedAt = Date.now();
 let bootstrapTimer = null;
 let userPrefs = { anonymous: false, readReceipts: true, notifications: false, showOnline: true, theme: 'aero', primary: '#91d832' };
+const DEFAULT_ACCENT = '#91d832';
+let channelSeq = 0;
+const uniqueTopic = base => `${base}-${++channelSeq}-${Math.random().toString(36).slice(2, 6)}`;
+let chatListLoadPromise = null, chatListReloadQueued = false, chatListRefreshTimer = null, lastChatListSig = '', chatListAnimated = false;
+const messageNodes = new Map();
+let messageViewEpoch = 0, messageRequestSeq = 0, lastAppliedMessageSeq = 0, messagesInitialRender = true, stickToBottom = true, messageRefreshTimer = null;
+const signedUrlCache = new Map();
+let botRenderedCount = 0;
+let previewObjectUrl = null, imageQualityTimer = null, imageQualitySeq = 0;
 
 const $ = id => document.getElementById(id);
 const safe = (value = '') => String(value ?? '').replace(/[&<>"']/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[char]));
@@ -359,10 +453,113 @@ function showNotification(title, body) {
     try { new Notification(title, { body, icon: 'https://xdevelopre.github.io/limochat/favicon.ico' }); } catch {}
   }
 }
+const AVATAR_PRESETS = {
+  f1: { g: 'f', label: 'دختر ۱', bg: '#ffd9e6', skin: '#f5cba7', hair: '#3b2417', style: 'long', cloth: '#e86a92' },
+  f2: { g: 'f', label: 'دختر ۲', bg: '#d9ecff', skin: '#e8b894', hair: '#1c1c1c', style: 'bun', cloth: '#4a8fe0' },
+  f3: { g: 'f', label: 'دختر ۳', bg: '#e6ffd1', skin: '#fbd9bd', hair: '#a0522d', style: 'bob', cloth: '#58ae24' },
+  f4: { g: 'f', label: 'دختر ۴', bg: '#fff0c9', skin: '#c68d63', hair: '#2a1a12', style: 'curly', cloth: '#f29a2e' },
+  f5: { g: 'f', label: 'دختر ۵', bg: '#eadcff', skin: '#f0c4a0', hair: '#d9a441', style: 'long', cloth: '#8e5ad7' },
+  f6: { g: 'f', label: 'دختر ۶', bg: '#d6f5f0', skin: '#e8b894', hair: '#2f6f8f', style: 'scarf', cloth: '#1fa58f' },
+  m1: { g: 'm', label: 'پسر ۱', bg: '#d9ecff', skin: '#f5cba7', hair: '#2b1b12', style: 'short', cloth: '#3b6fc4' },
+  m2: { g: 'm', label: 'پسر ۲', bg: '#ffe3d1', skin: '#e8b894', hair: '#1c1c1c', style: 'side', cloth: '#e0662f' },
+  m3: { g: 'm', label: 'پسر ۳', bg: '#e6ffd1', skin: '#f0c4a0', hair: '#3a2a22', style: 'beard', cloth: '#58ae24' },
+  m4: { g: 'm', label: 'پسر ۴', bg: '#fff0c9', skin: '#8d5a3b', hair: '#111111', style: 'curly', cloth: '#d6a417' },
+  m5: { g: 'm', label: 'پسر ۵', bg: '#eadcff', skin: '#fbd9bd', hair: '#2e7d32', style: 'cap', cloth: '#7a4fd1' },
+  m6: { g: 'm', label: 'پسر ۶', bg: '#d6f5f0', skin: '#c68d63', hair: '#222222', style: 'baldbeard', cloth: '#1fa58f' }
+};
+const avatarUriCache = new Map();
+function buildAvatarSvg(p) {
+  const { bg, skin, hair, style, cloth } = p;
+  const female = p.g === 'f';
+  const beard = style === 'beard' || style === 'baldbeard';
+  const mouth = beard ? '#f0cdb9' : '#a0463c';
+  const brow = (style === 'scarf' || style === 'cap') ? '#3a2a22' : hair;
+  const fringe = `<path d="M30 43C30 24 42 21 50 21S70 24 70 43C63 34 56 30 49 30C41 30 35 34 30 43Z" fill="${hair}"/>`;
+  let back = '', front = '';
+  if (style === 'long') {
+    back = `<path d="M23 52C20 22 35 12 50 12S80 22 77 52L79 82C71 87 66 81 66 70H34C34 81 29 87 21 82Z" fill="${hair}"/>`; front = fringe;
+  } else if (style === 'bob') {
+    back = `<path d="M24 54C20 22 35 13 50 13S80 22 76 54V62C76 67 69 67 67 61H33C31 67 24 67 24 62Z" fill="${hair}"/>`; front = fringe;
+  } else if (style === 'bun') {
+    back = `<circle cx="50" cy="14" r="9" fill="${hair}"/>`; front = fringe;
+  } else if (style === 'curly') {
+    back = [[30,34,9],[70,34,9],[26,50,8],[74,50,8],[38,22,9],[62,22,9],[50,18,10]].map(c => `<circle cx="${c[0]}" cy="${c[1]}" r="${c[2]}" fill="${hair}"/>`).join('');
+    front = [[40,28,6],[50,26,6],[60,28,6]].map(c => `<circle cx="${c[0]}" cy="${c[1]}" r="${c[2]}" fill="${hair}"/>`).join('');
+  } else if (style === 'scarf') {
+    back = `<path d="M18 60C14 22 34 9 50 9S86 22 82 60C82 74 70 84 50 84S18 74 18 60Z" fill="${hair}"/>`;
+  } else if (style === 'short' || style === 'beard') {
+    front = `<path d="M31 42C29 20 42 16 50 16S71 20 69 42C66 33 58 28 50 28S34 33 31 42Z" fill="${hair}"/>`;
+  } else if (style === 'side') {
+    front = `<path d="M31 44C27 20 46 13 57 17C69 21 72 32 69 44C65 32 54 27 42 29C37 31 33 36 31 44Z" fill="${hair}"/>`;
+  } else if (style === 'cap') {
+    front = `<path d="M29 38C30 16 70 16 71 38Z" fill="${hair}"/><rect x="27" y="36" width="46" height="5" rx="2.5" fill="${hair}"/>`;
+  }
+  const beardShape = beard ? `<path d="M31 50C31 70 41 73 50 73S69 70 69 50C66 58 60 61 50 61S34 58 31 50Z" fill="${hair}"/>` : '';
+  const ears = style === 'scarf' ? '' : `<circle cx="31" cy="48" r="3.4" fill="${skin}"/><circle cx="69" cy="48" r="3.4" fill="${skin}"/>`;
+  const cheeks = female ? '<circle cx="37" cy="53" r="3" fill="#ff8aa5" opacity=".35"/><circle cx="63" cy="53" r="3" fill="#ff8aa5" opacity=".35"/>' : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="${bg}"/>`
+    + `<path d="M10 100C12 80 28 72 50 72S88 80 90 100Z" fill="${cloth}"/>`
+    + `<rect x="43" y="56" width="14" height="22" rx="6" fill="${skin}"/>`
+    + back + ears
+    + `<ellipse cx="50" cy="46" rx="19" ry="22" fill="${skin}"/>`
+    + front + beardShape + cheeks
+    + `<path d="M37 41Q42 38 46 40M54 40Q58 38 63 41" stroke="${brow}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`
+    + '<circle cx="42" cy="47" r="2.3" fill="#2a2a2a"/><circle cx="58" cy="47" r="2.3" fill="#2a2a2a"/>'
+    + '<path d="M50 49V54Q48 56 46 55" stroke="rgba(0,0,0,.18)" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
+    + `<path d="M44 58Q50 63 56 58" stroke="${mouth}" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`;
+}
+function avatarUri(id) {
+  if (!AVATAR_PRESETS[id]) return '';
+  if (!avatarUriCache.has(id)) avatarUriCache.set(id, 'data:image/svg+xml;utf8,' + encodeURIComponent(buildAvatarSvg(AVATAR_PRESETS[id])));
+  return avatarUriCache.get(id);
+}
 function createAvatar(target, value) {
-  if (value && /^https?:\/\//i.test(value)) {
-    const img = document.createElement('img'); img.src = value; img.alt = ''; target.replaceChildren(img);
-  } else target.textContent = (value || 'ل').slice(0, 2);
+  const text = String(value || 'ل');
+  if (/^https?:\/\//i.test(text)) {
+    const img = document.createElement('img'); img.src = text; img.alt = ''; target.replaceChildren(img);
+  } else if (text.startsWith('preset:')) {
+    const id = text.slice(7);
+    if (AVATAR_PRESETS[id]) { const img = document.createElement('img'); img.src = avatarUri(id); img.alt = ''; target.replaceChildren(img); }
+    else target.textContent = 'ل';
+  } else target.textContent = text.slice(0, 2);
+}
+function avatarPickerHtml() {
+  const current = currentUserData?.avatar || '';
+  const group = (g, title) => `<div class="avatar-group-title">${title}</div><div class="avatar-grid">${Object.entries(AVATAR_PRESETS).filter(([, p]) => p.g === g).map(([id, p]) => `<button type="button" class="avatar-choice${current === 'preset:' + id ? ' selected' : ''}" data-id="${id}" aria-label="${p.label}" onclick="selectAvatar('${id}')"><img src="${avatarUri(id)}" alt=""></button>`).join('')}</div>`;
+  return `<div class="setting-card"><h3>تصویر نمایه</h3><p>یکی از تصویرهای آماده را انتخاب کنید.</p>${group('f', 'زن')}${group('m', 'مرد')}<button type="button" class="btn outline full" onclick="selectAvatar(null)">بدون تصویر (نمایش حرف اول)</button></div>`;
+}
+function refreshAvatarPicker() {
+  const current = currentUserData?.avatar || '';
+  document.querySelectorAll('.avatar-choice').forEach(btn => btn.classList.toggle('selected', current === 'preset:' + btn.dataset.id));
+}
+window.selectAvatar = async id => {
+  if (!currentUserData) return;
+  if (id && !AVATAR_PRESETS[id]) return;
+  const value = id ? 'preset:' + id : null;
+  const previous = currentUserData.avatar || null;
+  if (value === previous) return;
+  currentUserData.avatar = value; renderProfile(); refreshAvatarPicker();
+  const { error } = await supabase.from('profiles').update({ avatar_url: value }).eq('id', currentUserData.uid);
+  if (error) {
+    console.error('Avatar update failed:', error);
+    currentUserData.avatar = previous; renderProfile(); refreshAvatarPicker();
+    showToast('ذخیره تصویر نمایه ناموفق بود');
+    return;
+  }
+  showToast('تصویر نمایه تغییر کرد');
+};
+function applyAccent(color) {
+  const value = /^#[0-9a-f]{6}$/i.test(String(color)) ? String(color) : DEFAULT_ACCENT;
+  const root = document.documentElement;
+  const r = parseInt(value.slice(1, 3), 16), g = parseInt(value.slice(3, 5), 16), b = parseInt(value.slice(5, 7), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  root.style.setProperty('--primary', value);
+  root.style.setProperty('--on-primary', luminance > 0.58 ? '#1b2a12' : '#ffffff');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', value);
+}
+function pulseThemeTransition() {
+  const root = document.documentElement; root.classList.add('theme-anim');
+  clearTimeout(window.themeAnimTimer); window.themeAnimTimer = setTimeout(() => root.classList.remove('theme-anim'), 450);
 }
 function renderProfile() {
   if (!currentUserData) return;
@@ -395,8 +592,8 @@ async function loadPrefs() {
     const { data, error } = await supabase.from('user_settings').select('preferences').eq('user_id', currentUserData.uid).maybeSingle();
     if (!error && data?.preferences) userPrefs = { ...userPrefs, ...data.preferences };
   }
-  if (userPrefs.theme) document.documentElement.dataset.theme = userPrefs.theme;
-  if (userPrefs.primary) document.documentElement.style.setProperty('--primary', userPrefs.primary);
+  document.documentElement.dataset.theme = userPrefs.theme || 'aero';
+  applyAccent(userPrefs.primary || DEFAULT_ACCENT);
   localStorage.setItem(prefsKey(), JSON.stringify(userPrefs));
 }
 async function loadChatStates() {
@@ -475,7 +672,7 @@ async function initializeSession(session) {
     cleanupCall(false); currentChatId = null; currentChatParticipants = [];
   }
   if (currentSessionUid === user.id && currentUserData) { currentAuthUser = user; return; }
-  currentSessionUid = user.id; currentAuthUser = user;
+  currentSessionUid = user.id; currentAuthUser = user; lastChatListSig = ''; chatListAnimated = false;
   userPrefs = { anonymous: false, readReceipts: true, notifications: false, showOnline: true, theme: 'aero', primary: '#91d832' };
   try {
     // 1) دریافت نمایه موجود. select('*') برای سازگاری با نصب‌های قبلی حفظ شده است.
@@ -510,6 +707,7 @@ async function initializeSession(session) {
     optionalLoads.forEach((result, index) => {
       if (result.status === 'rejected') console.warn('Optional account data load failed:', index, result.reason);
     });
+    ensureChatListChannel();
     void loadChatList().catch(error => console.warn('Chat list load failed:', error));
     try { watchIncomingCalls(); } catch (error) { console.warn('Incoming call watcher failed:', error); }
     return true;
@@ -598,10 +796,34 @@ window.logout = async () => {
   if (error) showToast('خروج انجام نشد: ' + error.message);
 };
 
+function scheduleChatListRefresh() {
+  clearTimeout(chatListRefreshTimer);
+  chatListRefreshTimer = setTimeout(() => { void loadChatList(); }, 250);
+}
+// The realtime subscription is created once per session and is never torn down by a manual refresh.
+function ensureChatListChannel() {
+  if (chatChannel || !currentUserData) return;
+  const uid = currentUserData.uid;
+  chatChannel = supabase.channel(uniqueTopic('chat-list-' + uid))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_members', filter: `user_id=eq.${uid}` }, scheduleChatListRefresh)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'chats' }, scheduleChatListRefresh)
+    .subscribe();
+}
 async function loadChatList() {
   if (!currentUserData) return;
+  if (chatListLoadPromise) { chatListReloadQueued = true; return chatListLoadPromise; }
+  chatListLoadPromise = (async () => {
+    try { await fetchAndRenderChatList(); }
+    finally {
+      chatListLoadPromise = null;
+      if (chatListReloadQueued) { chatListReloadQueued = false; void loadChatList(); }
+    }
+  })();
+  return chatListLoadPromise;
+}
+async function fetchAndRenderChatList() {
+  if (!currentUserData) return;
   const container = $('chat-list');
-  if (chatChannel) removeChannel(chatChannel);
   try {
     const { data: memberships, error: memberError } = await supabase.from('chat_members').select('chat_id,user_id').eq('user_id', currentUserData.uid);
     if (memberError) throw memberError;
@@ -632,20 +854,22 @@ async function loadChatList() {
       return { id: chat.id, name: profile?.display_name || profile?.username || chat.name || 'گفتگوی خصوصی', avatar: profile?.avatar_url || profile?.display_name || 'ل', lastMessage: chat.last_message || 'شروع مکالمه...', participants, otherUid, type: 'private' };
     });
     renderChatList(rows);
-    chatChannel = supabase.channel('chat-list-' + currentUserData.uid)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_members', filter: `user_id=eq.${currentUserData.uid}` }, () => loadChatList())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chats' }, () => loadChatList())
-      .subscribe();
+    ensureChatListChannel();
   } catch (error) {
     console.error('Chat list:', error);
-    container.innerHTML = '<div class="empty-state"><i class="fa-regular fa-comments"></i><p>بارگذاری گفتگوها انجام نشد. لطفاً دوباره تلاش کنید.</p></div>';
+    if (!container.querySelector('.chat-row')) container.innerHTML = '<div class="empty-state"><i class="fa-regular fa-comments"></i><p>بارگذاری گفتگوها انجام نشد. لطفاً دوباره تلاش کنید.</p></div>';
     showToast('بارگذاری گفتگوها انجام نشد. اتصال اینترنت را بررسی کنید.');
   }
 }
 function renderChatList(chats = []) {
   const container = $('chat-list');
-  container.replaceChildren();
   const pinned = getSet(pinKey()); const hidden = getSet(hiddenKey());
+  const signature = JSON.stringify([chats.map(c => [c.id, c.name, c.avatar, c.lastMessage, (c.participants || []).join(',')]), [...pinned], [...hidden], blockedUsers]);
+  if (signature === lastChatListSig && container.querySelector('.chat-row')) return;
+  lastChatListSig = signature;
+  const animateRows = !chatListAnimated;
+  const previousScroll = container.scrollTop;
+  container.replaceChildren();
   container.appendChild(makeChatRow({ id: 'bot', name: 'لیمو بات', avatar: '🤖', lastMessage: 'دستیار راهنمای داخل برنامه', type: 'bot' }));
   container.appendChild(makeChatRow({ id: 'global', name: 'گفتگوی عمومی', avatar: '🌍', lastMessage: 'گفتگوی جمعی لیمو چت', type: 'global' }));
   chats.filter(chat => !hidden.has(chat.id)).sort((a,b) => (pinned.has(b.id) ? 1 : 0) - (pinned.has(a.id) ? 1 : 0)).forEach(chat => {
@@ -657,11 +881,16 @@ function renderChatList(chats = []) {
     hint.innerHTML = '<i class="fa-regular fa-comments"></i><p>هنوز گفتگوی خصوصی ندارید.<br>با جستجوی آیدی دوستانتان را پیدا کنید.</p>';
     container.appendChild(hint);
   }
+  if (animateRows) {
+    chatListAnimated = true;
+    [...container.children].forEach((el, i) => { el.classList.add('row-enter'); el.style.animationDelay = (Math.min(i, 10) * 45) + 'ms'; });
+  }
+  container.scrollTop = previousScroll;
 }
 function makeChatRow(info) {
   const row = document.createElement('div'); row.className = 'chat-row'; row.dataset.chatId = info.id;
   const avatar = document.createElement('div'); avatar.className = 'avatar';
-  if (info.avatar && /^https?:\/\//.test(info.avatar)) createAvatar(avatar, info.avatar); else avatar.textContent = info.avatar || 'ل';
+  createAvatar(avatar, info.avatar || 'ل');
   const body = document.createElement('div'); body.className = 'chat-details';
   const top = document.createElement('div'); top.className = 'chat-topline';
   const name = document.createElement('span'); name.className = 'chat-name'; name.textContent = info.name;
@@ -692,12 +921,13 @@ window.openChatRoom = async (id, name, avatar, participants = [], type = null) =
   $('call-button').style.display = currentChatType === 'private' ? 'grid' : 'none';
   replyTarget = null; $('reply-preview').classList.remove('show');
   window.navigateTo('chat-room');
-  if (currentChatType === 'bot') { await loadBotMessages(); return; }
+  if (currentChatType === 'bot') { resetMessageView(); botRenderedCount = 0; await loadBotMessages(); return; }
   loadMessages(id);
 };
 window.closeChatRoom = () => {
+  clearTimeout(messageRefreshTimer);
   if (messageChannel) removeChannel(messageChannel); messageChannel = null;
-  currentChatId = null; replyTarget = null; window.navigateTo('main');
+  currentChatId = null; replyTarget = null; messageViewEpoch++; window.navigateTo('main');
 };
 async function fetchCurrentMessages(chatId) {
   const table = currentChatType === 'global' ? 'global_messages' : 'messages';
@@ -707,60 +937,130 @@ async function fetchCurrentMessages(chatId) {
   if (error) throw error;
   return (data || []).map(mapMessage).filter(message => message.senderId === currentUserData.uid || !isBlocked(message.senderId));
 }
+function isNearBottom(el, threshold = 90) { return el.scrollHeight - el.scrollTop - el.clientHeight < threshold; }
+function scrollMessagesToBottom(smooth) {
+  const root = $('messages');
+  requestAnimationFrame(() => root.scrollTo({ top: root.scrollHeight, behavior: smooth ? 'smooth' : 'auto' }));
+}
+function scheduleMessageRefresh(chatId) {
+  clearTimeout(messageRefreshTimer);
+  messageRefreshTimer = setTimeout(() => { void renderMessagesFromServer(chatId); }, 120);
+}
+function resetMessageView() {
+  clearTimeout(messageRefreshTimer);
+  messageViewEpoch++; lastAppliedMessageSeq = 0; messagesInitialRender = true; stickToBottom = true;
+  messageNodes.clear();
+  $('messages').replaceChildren();
+}
+function setMessagesPlaceholder(text) {
+  const root = $('messages');
+  let box = root.querySelector(':scope > .empty-state');
+  if (text === null) { box?.remove(); return; }
+  if (!box) { box = document.createElement('div'); box.className = 'empty-state'; root.appendChild(box); }
+  box.textContent = text;
+}
+function loadSignedImage(img, path) {
+  const cached = signedUrlCache.get(path);
+  if (cached && cached.exp > Date.now()) { img.src = cached.url; return; }
+  supabase.storage.from('chat-media').createSignedUrl(path, 3600).then(({ data, error }) => {
+    if (!error && data?.signedUrl) { signedUrlCache.set(path, { url: data.signedUrl, exp: Date.now() + 50 * 60 * 1000 }); img.src = data.signedUrl; }
+  }).catch(error => console.warn('Image URL:', error));
+}
+function messageSignature(m) { return JSON.stringify([m.text, m.edited, m.status, m.reactions, m.imagePath, m.replyTo?.text || '', m.senderName]); }
+function nextLiveNode(node) { while (node && node.classList.contains('leaving')) node = node.nextElementSibling; return node; }
+function applyMessages(rows) {
+  const root = $('messages');
+  const wasNearBottom = isNearBottom(root);
+  const initial = messagesInitialRender;
+  const ids = new Set(rows.map(row => row.id));
+  for (const [id, entry] of [...messageNodes]) {
+    if (!ids.has(id)) { messageNodes.delete(id); entry.el.classList.add('leaving'); setTimeout(() => entry.el.remove(), 260); }
+  }
+  if (!rows.length) { setMessagesPlaceholder('هنوز پیامی وجود ندارد. اولین پیام را بفرستید.'); messagesInitialRender = false; return; }
+  setMessagesPlaceholder(null);
+  let cursor = nextLiveNode(root.firstElementChild);
+  let added = false, addedMine = false;
+  for (const m of rows) {
+    const sig = messageSignature(m);
+    const entry = messageNodes.get(m.id);
+    if (entry && entry.sig === sig) {
+      if (entry.el === cursor) cursor = nextLiveNode(cursor.nextElementSibling);
+      else root.insertBefore(entry.el, cursor);
+    } else {
+      const el = buildMessageEl(m, !entry && !initial);
+      if (entry) { if (entry.el === cursor) cursor = nextLiveNode(cursor.nextElementSibling); entry.el.remove(); }
+      root.insertBefore(el, cursor);
+      messageNodes.set(m.id, { el, sig });
+      if (!entry) { added = true; if (m.senderId === currentUserData.uid) addedMine = true; }
+    }
+  }
+  if (initial) scrollMessagesToBottom(false);
+  else if (added && (wasNearBottom || addedMine)) scrollMessagesToBottom(true);
+  messagesInitialRender = false;
+}
 async function loadMessages(chatId) {
-  const container = $('messages'); container.replaceChildren();
+  resetMessageView();
   if (messageChannel) removeChannel(messageChannel); messageChannel = null;
   try {
     await renderMessagesFromServer(chatId);
-    const table = currentChatType === 'global' ? 'global_messages' : 'messages';
-    const channel = supabase.channel('messages-' + (currentChatType === 'global' ? 'global' : chatId));
-    if (table === 'global_messages') channel.on('postgres_changes', { event: '*', schema: 'public', table }, () => renderMessagesFromServer(chatId));
-    else channel.on('postgres_changes', { event: '*', schema: 'public', table, filter: `chat_id=eq.${chatId}` }, () => renderMessagesFromServer(chatId));
-    messageChannel = channel.subscribe();
+    if (currentChatId !== chatId) return;
+    const table = messageTable();
+    const options = table === 'global_messages'
+      ? { event: '*', schema: 'public', table }
+      : { event: '*', schema: 'public', table, filter: `chat_id=eq.${chatId}` };
+    const channel = supabase.channel(uniqueTopic('messages-' + (currentChatType === 'global' ? 'global' : chatId)));
+    channel.on('postgres_changes', options, () => scheduleMessageRefresh(chatId));
+    messageChannel = channel.subscribe(status => { if (status === 'SUBSCRIBED') scheduleMessageRefresh(chatId); });
     if (currentChatType === 'private' && userPrefs.readReceipts) supabase.rpc('mark_chat_messages_read', { target_chat: chatId }).then(({ error }) => { if (error) console.warn('Read receipts:', error.message); });
   } catch (error) {
     console.error('Messages:', error);
-    container.innerHTML = '<div class="empty-state"><p>دریافت پیام‌ها انجام نشد. لطفاً دوباره تلاش کنید.</p></div>';
+    setMessagesPlaceholder('دریافت پیام‌ها انجام نشد. لطفاً دوباره تلاش کنید.');
   }
 }
 async function renderMessagesFromServer(chatId) {
   if (currentChatId !== chatId) return;
+  const epoch = messageViewEpoch; const seq = ++messageRequestSeq;
   try {
     const rows = await fetchCurrentMessages(chatId);
-    if (currentChatId !== chatId) return;
-    const root = $('messages'); root.replaceChildren();
-    if (!rows.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = 'هنوز پیامی وجود ندارد. اولین پیام را بفرستید.'; root.appendChild(empty); return; }
-    for (const message of rows) await renderMessage(message);
-    root.scrollTop = root.scrollHeight;
-  } catch (error) { console.error(error); showToast('به‌روزرسانی پیام‌ها ناموفق بود'); }
+    if (currentChatId !== chatId || epoch !== messageViewEpoch || seq < lastAppliedMessageSeq) return;
+    lastAppliedMessageSeq = seq;
+    applyMessages(rows);
+  } catch (error) {
+    console.error(error);
+    if (messagesInitialRender && epoch === messageViewEpoch) setMessagesPlaceholder('دریافت پیام‌ها انجام نشد. لطفاً دوباره تلاش کنید.');
+    else showToast('به‌روزرسانی پیام‌ها ناموفق بود');
+  }
 }
-async function renderMessage(message) {
-  const container = $('messages');
+function buildMessageEl(message, animate) {
   const isMe = message.senderId === currentUserData.uid;
   const wrap = document.createElement('div'); wrap.className = 'msg-wrap ' + (isMe ? 'me' : 'them');
-  const bubble = document.createElement('div'); bubble.className = 'message';
+  const bubble = document.createElement('div'); bubble.className = 'message' + (animate ? ' enter' : '');
   if (currentChatType === 'global' && !isMe) { const sender = document.createElement('div'); sender.className = 'sender'; sender.textContent = message.senderName || 'کاربر'; bubble.appendChild(sender); }
-  if (message.replyTo?.text) { const quote = document.createElement('div'); quote.className = 'reply-quote'; quote.textContent = 'پاسخ به: ' + message.replyTo.text.slice(0,100); bubble.appendChild(quote); }
+  if (message.replyTo?.text) { const quote = document.createElement('div'); quote.className = 'reply-quote'; quote.textContent = 'پاسخ به: ' + message.replyTo.text.slice(0, 100); bubble.appendChild(quote); }
   if (message.imagePath) {
-    const img = document.createElement('img'); img.className = 'msg-image'; img.alt = message.imageName || 'تصویر ارسال‌شده'; img.loading = 'lazy';
-    bubble.appendChild(img);
-    supabase.storage.from('chat-media').createSignedUrl(message.imagePath, 3600).then(({ data, error }) => { if (!error && data?.signedUrl) img.src = data.signedUrl; }).catch(error => console.warn('Image URL:', error));
-    img.addEventListener('click', event => { event.stopPropagation(); if (img.src) window.open(img.src, '_blank', 'noopener'); });
+    const frame = document.createElement('div'); frame.className = 'img-frame';
+    const img = document.createElement('img'); img.alt = message.imageName || 'تصویر ارسال‌شده'; img.decoding = 'async';
+    img.addEventListener('load', () => { frame.classList.add('loaded'); if (stickToBottom) { const r = $('messages'); r.scrollTop = r.scrollHeight; } });
+    img.addEventListener('error', () => frame.classList.add('loaded'));
+    frame.appendChild(img); bubble.appendChild(frame);
+    loadSignedImage(img, message.imagePath);
+    frame.addEventListener('click', event => { event.stopPropagation(); if (img.src) window.open(img.src, '_blank', 'noopener'); });
   }
   if (message.text) { const text = document.createElement('div'); text.className = 'msg-text'; text.textContent = message.text; bubble.appendChild(text); }
   const meta = document.createElement('div'); meta.className = 'msg-meta';
   const time = document.createElement('span'); time.textContent = displayTime(message.createdAt); meta.appendChild(time);
   if (message.edited) { const edited = document.createElement('span'); edited.className = 'edited'; edited.textContent = 'ویرایش‌شده'; meta.appendChild(edited); }
   if (isMe) { const ticks = document.createElement('span'); ticks.className = 'ticks'; ticks.textContent = message.status === 'read' ? '✓✓' : '✓'; meta.appendChild(ticks); }
-  bubble.appendChild(meta); bubble.addEventListener('click', () => window.openMessageActions(message));
+  bubble.appendChild(meta);
+  bubble.addEventListener('click', () => window.openMessageActions(message));
   bubble.addEventListener('contextmenu', event => { event.preventDefault(); window.openMessageActions(message); });
   wrap.appendChild(bubble);
   if (message.reactions && Object.keys(message.reactions).length) {
     const reactions = document.createElement('div'); reactions.className = 'reactions';
-    Object.entries(message.reactions).forEach(([uid, emoji]) => { const chip = document.createElement('span'); chip.className = 'reaction'; chip.textContent = emoji; reactions.appendChild(chip); });
+    Object.values(message.reactions).forEach(emoji => { const chip = document.createElement('span'); chip.className = 'reaction'; chip.textContent = emoji; reactions.appendChild(chip); });
     wrap.appendChild(reactions);
   }
-  container.appendChild(wrap);
+  return wrap;
 }
 window.sendMessage = async () => {
   const input = $('message-input');
@@ -927,7 +1227,7 @@ window.chooseImage = async event => {
   if (currentChatType === 'bot') return showToast('ارسال تصویر به لیمو بات فعال نیست');
   try {
     const blob = await compressImage(file, 0.8); preparedImage = { file, blob, name: file.name || 'image.jpg' };
-    $('image-preview-img').src = URL.createObjectURL(blob); $('image-quality').value = 80; $('quality-label').textContent = '۸۰٪';
+    setPreviewBlob(blob); $('image-quality').value = 80; $('quality-label').textContent = '۸۰٪';
     $('image-size-label').textContent = formatBytes(blob.size) + ' از حداکثر ۲ مگابایت'; $('send-image-button').disabled = blob.size > 2 * 1024 * 1024; $('image-preview').classList.add('show');
   } catch (error) { console.error(error); showToast('خواندن یا فشرده‌سازی تصویر ناموفق بود'); }
 };
@@ -948,19 +1248,33 @@ function compressImage(file, quality) {
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); }; img.src = url;
   });
 }
-window.updateImageQuality = async value => {
-  if (!preparedImage) return; $('quality-label').textContent = Number(value).toLocaleString('fa-IR') + '٪';
-  try {
-    const blob = await compressImage(preparedImage.file, Number(value) / 100); preparedImage.blob = blob;
-    $('image-size-label').textContent = formatBytes(blob.size) + ' از حداکثر ۲ مگابایت'; $('send-image-button').disabled = blob.size > 2 * 1024 * 1024;
-    $('image-preview-img').src = URL.createObjectURL(blob);
-  } catch { showToast('تغییر کیفیت تصویر ناموفق بود'); }
+function setPreviewBlob(blob) {
+  if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+  previewObjectUrl = URL.createObjectURL(blob);
+  $('image-preview-img').src = previewObjectUrl;
+}
+window.updateImageQuality = value => {
+  if (!preparedImage) return;
+  $('quality-label').textContent = Number(value).toLocaleString('fa-IR') + '٪';
+  clearTimeout(imageQualityTimer);
+  const seq = ++imageQualitySeq;
+  imageQualityTimer = setTimeout(async () => {
+    if (!preparedImage) return;
+    try {
+      const blob = await compressImage(preparedImage.file, Number(value) / 100);
+      if (!preparedImage || seq !== imageQualitySeq) return;
+      preparedImage.blob = blob;
+      $('image-size-label').textContent = formatBytes(blob.size) + ' از حداکثر ۲ مگابایت'; $('send-image-button').disabled = blob.size > 2 * 1024 * 1024;
+      setPreviewBlob(blob);
+    } catch { showToast('تغییر کیفیت تصویر ناموفق بود'); }
+  }, 160);
 };
-window.cancelImage = () => { preparedImage = null; $('image-preview').classList.remove('show'); };
+window.cancelImage = () => { clearTimeout(imageQualityTimer); imageQualitySeq++; preparedImage = null; $('image-preview').classList.remove('show'); setTimeout(() => { if (!preparedImage && previewObjectUrl) { URL.revokeObjectURL(previewObjectUrl); previewObjectUrl = null; } }, 400); };
 window.sendPreparedImage = async () => {
   if (!preparedImage || !currentChatId) return;
   if (!canSendMessageLocally()) return;
   if (preparedImage.blob.size > 2 * 1024 * 1024) return showToast('تصویر باید حداکثر ۲ مگابایت باشد');
+  if (messageSendInProgress) return; messageSendInProgress = true;
   const button = $('send-image-button'); button.disabled = true; button.textContent = 'در حال ارسال...';
   let uploadedPath = null;
   let imageMessageInserted = false;
@@ -990,7 +1304,7 @@ window.sendPreparedImage = async () => {
     console.error('Image message failed:', { code: error?.code, message: error?.message, details: error?.details, hint: error?.hint });
     showToast(friendlyMessageError(error));
   }
-  finally { button.disabled = false; button.textContent = 'ارسال تصویر'; }
+  finally { messageSendInProgress = false; button.disabled = false; button.textContent = 'ارسال تصویر'; }
 };
 
 // زیرصفحه‌های تنظیمات
@@ -998,13 +1312,13 @@ window.renderSubMenu = key => {
   const title = $('submenu-title'); const body = $('submenu-body'); body.replaceChildren(); let html = '';
   if (key === 'account') {
     title.textContent = 'حساب کاربری';
-    html = `<div class="setting-card"><h3>اطلاعات نمایه</h3><label>نام نمایشی</label><input class="plain-input" id="profile-name" value="${safe(currentUserData.displayName || '')}" maxlength="40"><label>بیوگرافی</label><input class="plain-input" id="profile-bio" value="${safe(currentUserData.bio || '')}" maxlength="120"><button class="btn full" onclick="saveProfile()">ذخیره نمایه</button></div><div class="setting-card"><h3>تغییر آیدی</h3><p>برای ورود با آیدی جدید، آدرس ورود داخلی حساب نیز به‌روزرسانی می‌شود. تأیید ایمیل باید در تنظیمات Auth خاموش باشد.</p><label>آیدی جدید</label><input class="plain-input" id="new-username" dir="ltr" value="${safe(currentUserData.username || '')}" maxlength="24"><button class="btn full" onclick="changeUsername()">تغییر آیدی</button></div><div class="setting-card"><h3>تغییر رمز عبور</h3><label>رمز فعلی (در صورت داشتن رمز)</label><input class="plain-input" id="old-password" type="password"><label>رمز جدید</label><input class="plain-input" id="new-password" type="password"><label>تکرار رمز جدید</label><input class="plain-input" id="confirm-password" type="password"><button class="btn full" onclick="changePassword()">ذخیره رمز عبور</button></div>`;
+    html = `${avatarPickerHtml()}<div class="setting-card"><h3>اطلاعات نمایه</h3><label>نام نمایشی</label><input class="plain-input" id="profile-name" value="${safe(currentUserData.displayName || '')}" maxlength="40"><label>بیوگرافی</label><input class="plain-input" id="profile-bio" value="${safe(currentUserData.bio || '')}" maxlength="120"><button class="btn full" onclick="saveProfile()">ذخیره نمایه</button></div><div class="setting-card"><h3>تغییر آیدی</h3><p>برای ورود با آیدی جدید، آدرس ورود داخلی حساب نیز به‌روزرسانی می‌شود. تأیید ایمیل باید در تنظیمات Auth خاموش باشد.</p><label>آیدی جدید</label><input class="plain-input" id="new-username" dir="ltr" value="${safe(currentUserData.username || '')}" maxlength="24"><button class="btn full" onclick="changeUsername()">تغییر آیدی</button></div><div class="setting-card"><h3>تغییر رمز عبور</h3><label>رمز فعلی (در صورت داشتن رمز)</label><input class="plain-input" id="old-password" type="password"><label>رمز جدید</label><input class="plain-input" id="new-password" type="password"><label>تکرار رمز جدید</label><input class="plain-input" id="confirm-password" type="password"><button class="btn full" onclick="changePassword()">ذخیره رمز عبور</button></div>`;
   } else if (key === 'privacy') {
     title.textContent = 'حریم خصوصی و چت ایمن';
     html = `<div class="setting-card"><h3>نمایش و حریم خصوصی</h3><div class="setting-line"><span>نمایش نام من به‌صورت ناشناس در پیام‌های جدید</span><input class="switch" type="checkbox" id="pref-anonymous" ${userPrefs.anonymous ? 'checked' : ''} onchange="setPref('anonymous',this.checked)"></div><div class="setting-line"><span>ارسال رسید خوانده‌شدن پیام‌ها</span><input class="switch" type="checkbox" id="pref-read" ${userPrefs.readReceipts ? 'checked' : ''} onchange="setPref('readReceipts',this.checked)"></div><div class="setting-line"><span>نمایش وضعیت آنلاین در گفتگو</span><input class="switch" type="checkbox" id="pref-online" ${userPrefs.showOnline ? 'checked' : ''} onchange="setPref('showOnline',this.checked)"></div></div><div class="setting-card"><h3>توضیح امنیت</h3><p>حالت ناشناس فقط نام نمایشی پیام‌های جدید را پنهان می‌کند؛ شناسهٔ فرستنده برای مدیریت و امنیت ذخیره می‌شود. این نسخه رمزنگاری سرتاسری (E2EE) ندارد و دسترسی اطلاعات در سمت سرور کنترل می‌شود.</p></div><div class="setting-card"><button class="btn outline full" onclick="openSubMenu('blocked')">مدیریت کاربران مسدودشده</button></div>`;
   } else if (key === 'theme') {
     title.textContent = 'تم و ظاهر'; const theme = document.documentElement.dataset.theme || 'aero';
-    html = `<div class="setting-card"><h3>انتخاب پوسته</h3><div class="setting-line"><span>مات Aero (پیشنهادی)</span><input type="radio" name="theme" ${theme === 'aero' ? 'checked' : ''} onchange="setTheme('aero')"></div><div class="setting-line"><span>روشن</span><input type="radio" name="theme" ${theme === 'light' ? 'checked' : ''} onchange="setTheme('light')"></div><div class="setting-line"><span>تیره</span><input type="radio" name="theme" ${theme === 'dark' ? 'checked' : ''} onchange="setTheme('dark')"></div></div><div class="setting-card"><h3>رنگ اصلی</h3><input type="color" id="primary-color" value="${userPrefs.primary || '#91d832'}" style="width:100%;height:48px;border:0;background:transparent" onchange="setPrimaryColor(this.value)"></div>`;
+    html = `<div class="setting-card"><h3>انتخاب پوسته</h3><div class="setting-line"><span>مات Aero (پیشنهادی)</span><input type="radio" name="theme" ${theme === 'aero' ? 'checked' : ''} onchange="setTheme('aero')"></div><div class="setting-line"><span>روشن</span><input type="radio" name="theme" ${theme === 'light' ? 'checked' : ''} onchange="setTheme('light')"></div><div class="setting-line"><span>تیره</span><input type="radio" name="theme" ${theme === 'dark' ? 'checked' : ''} onchange="setTheme('dark')"></div></div><div class="setting-card"><h3>رنگ اصلی</h3><div class="swatch-row">${['#91d832','#2fb36d','#18a0d8','#6c7bff','#a35cf0','#ee5fa0','#ff7a45','#f5b21a'].map(c => `<button type="button" class="swatch${(userPrefs.primary || '#91d832').toLowerCase() === c ? ' selected' : ''}" style="background:${c}" aria-label="${c}" onclick="setPrimaryColor('${c}')"></button>`).join('')}</div><input type="color" id="primary-color" class="color-input" value="${userPrefs.primary || '#91d832'}" oninput="previewAccent(this.value)" onchange="setPrimaryColor(this.value)"><button type="button" class="btn outline full" onclick="setPrimaryColor('#91d832')">بازگشت به رنگ پیش‌فرض</button></div>`;
   } else if (key === 'notifications') {
     title.textContent = 'اعلان‌ها';
     html = `<div class="setting-card"><div class="setting-line"><span>فعال بودن اعلان هنگام دریافت پیام در پس‌زمینه</span><input class="switch" type="checkbox" ${userPrefs.notifications ? 'checked' : ''} onchange="toggleNotifications(this.checked)"></div><p>اعلان مرورگر به اجازهٔ سیستم‌عامل و HTTPS نیاز دارد. برای اعلان زمان بسته بودن کامل مرورگر، سرویس Push جداگانه لازم است.</p><button class="btn outline full" onclick="testNotification()">آزمایش اعلان</button></div>`;
@@ -1018,14 +1332,23 @@ window.renderSubMenu = key => {
   } else if (key === 'data') {
     title.textContent = 'داده‌ها و ذخیره‌سازی'; html = `<div class="setting-card"><h3>وضعیت ذخیره‌سازی</h3><p>حساب‌ها و نمایه‌ها، گفتگوها، پیام‌ها، گزارش‌ها، وضعیت تماس‌ها، تنظیمات کاربری و فایل‌های تصویری در فضای دادهٔ برنامه ذخیره می‌شوند. تنظیمات محلی فقط برای نمایش سریع نگهداری می‌شوند.</p><button class="btn outline full" onclick="showStorageInfo()">نمایش اطلاعات ذخیره‌سازی</button><button class="btn outline full" onclick="clearLocalPreferences()">بازنشانی حافظهٔ محلی</button><div id="storage-info" class="help"></div></div>`;
   } else if (key === 'about') {
-    title.textContent = 'درباره لیمو چت'; html = `<div class="setting-card" style="text-align:center;padding:26px"><div class="brand-mark"><i class="fa-solid fa-lemon"></i></div><h2>لیمو چت</h2><p>نسخه 1.11</p><p><b>ساخته شده توسط امیرمحمد انصاری جابری</b></p><p>یک پیام‌رسان وب با رابط فارسی و پوسته مات Aero.</p></div>`;
+    title.textContent = 'درباره لیمو چت'; html = `<div class="setting-card" style="text-align:center;padding:26px"><div class="brand-mark"><i class="fa-solid fa-lemon"></i></div><h2>لیمو چت</h2><p>نسخه 1.12</p><p><b>ساخته شده توسط امیرمحمد انصاری جابری</b></p><p>یک پیام‌رسان وب با رابط فارسی و پوسته مات Aero.</p></div>`;
   }
   body.innerHTML = html;
   if (key === 'blocked') window.renderBlockedList();
 };
 window.setPref = async (key, value) => { userPrefs[key] = value; try { await cacheCurrentPrefs(); showToast('تنظیم در حساب شما ذخیره شد'); } catch (error) { showToast('ذخیره تنظیم ناموفق بود: ' + error.message); } };
-window.setTheme = async theme => { document.documentElement.dataset.theme = theme; userPrefs.theme = theme; try { await cacheCurrentPrefs(); showToast('پوسته تغییر کرد'); } catch (error) { showToast('ذخیره پوسته ناموفق بود: ' + error.message); } };
-window.setPrimaryColor = async color => { document.documentElement.style.setProperty('--primary', color); userPrefs.primary = color; try { await cacheCurrentPrefs(); } catch (error) { showToast('ذخیره رنگ ناموفق بود: ' + error.message); } };
+window.setTheme = async theme => {
+  pulseThemeTransition(); document.documentElement.dataset.theme = theme; userPrefs.theme = theme;
+  try { await cacheCurrentPrefs(); showToast('پوسته تغییر کرد'); } catch (error) { showToast('ذخیره پوسته ناموفق بود: ' + error.message); }
+};
+window.previewAccent = color => applyAccent(color);
+window.setPrimaryColor = async color => {
+  pulseThemeTransition(); applyAccent(color); userPrefs.primary = color;
+  document.querySelectorAll('.swatch').forEach(el => el.classList.toggle('selected', (el.getAttribute('aria-label') || '').toLowerCase() === color.toLowerCase()));
+  const input = $('primary-color'); if (input && input.value.toLowerCase() !== color.toLowerCase()) input.value = color;
+  try { await cacheCurrentPrefs(); } catch (error) { showToast('ذخیره رنگ ناموفق بود: ' + error.message); }
+};
 window.toggleNotifications = async enabled => {
   if (enabled) { if (!('Notification' in window)) { showToast('مرورگر از اعلان پشتیبانی نمی‌کند'); return; } const permission = await Notification.requestPermission(); if (permission !== 'granted') { showToast('اجازه اعلان داده نشد'); return; } }
   userPrefs.notifications = enabled; cacheCurrentPrefs(); showToast(enabled ? 'اعلان‌ها فعال شد' : 'اعلان‌ها غیرفعال شد');
@@ -1139,9 +1462,10 @@ async function loadBotMessages() {
 }
 function renderBotMessages() {
   const root = $('messages'); root.replaceChildren();
-  botMessages.forEach(message => {
+  const previousCount = botRenderedCount; botRenderedCount = botMessages.length;
+  botMessages.forEach((message, index) => {
     const wrap = document.createElement('div'); wrap.className = 'msg-wrap ' + (message.senderId === currentUserData.uid ? 'me' : 'them');
-    const bubble = document.createElement('div'); bubble.className = 'message'; const text = document.createElement('div'); text.className = 'msg-text'; text.textContent = message.text;
+    const bubble = document.createElement('div'); bubble.className = 'message' + (previousCount && index >= previousCount ? ' enter' : ''); const text = document.createElement('div'); text.className = 'msg-text'; text.textContent = message.text;
     const meta = document.createElement('div'); meta.className = 'msg-meta'; meta.textContent = displayTime(message.createdAt); bubble.append(text, meta); wrap.appendChild(bubble); root.appendChild(wrap);
   });
   root.scrollTop = root.scrollHeight;
@@ -1212,7 +1536,7 @@ async function listenForCandidates(side) {
   const { data, error } = await supabase.from('call_ice_candidates').select('*').eq('call_id', callRow.id).eq('side', side).order('created_at', { ascending: true });
   if (error) throw error;
   for (const row of data || []) await applyCandidate(row);
-  iceChannel = supabase.channel('ice-' + callRow.id + '-' + side)
+  iceChannel = supabase.channel(uniqueTopic('ice-' + callRow.id + '-' + side))
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'call_ice_candidates', filter: `call_id=eq.${callRow.id}` }, payload => { if (payload.new.side === side) applyCandidate(payload.new); })
     .subscribe();
 }
@@ -1223,7 +1547,7 @@ async function flushPendingIceCandidates() {
 }
 function watchCallDocument() {
   if (callChannel) removeChannel(callChannel);
-  callChannel = supabase.channel('call-' + callRow.id)
+  callChannel = supabase.channel(uniqueTopic('call-' + callRow.id))
     .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'calls', filter: `id=eq.${callRow.id}` }, async payload => {
       const data = payload.new;
       if (callRole === 'caller' && data.answer && callPc && !callPc.currentRemoteDescription) {
@@ -1256,7 +1580,7 @@ function watchIncomingCalls() {
     pendingIncoming = row; createAvatar($('call-avatar'), row.caller_name || 'ل'); showCallScreen(row.caller_name || 'تماس ورودی', 'در حال تماس...', true);
   };
   supabase.from('calls').select('*').eq('callee_id', currentUserData.uid).eq('status','ringing').then(({ data, error }) => { if (!error) (data || []).forEach(receiveCall); });
-  incomingCallChannel = supabase.channel('incoming-calls-' + currentUserData.uid)
+  incomingCallChannel = supabase.channel(uniqueTopic('incoming-calls-' + currentUserData.uid))
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'calls', filter: `callee_id=eq.${currentUserData.uid}` }, payload => receiveCall(payload.new))
     .subscribe();
 }
@@ -1302,9 +1626,25 @@ window.refreshCalls = async () => {
   });
 };
 
-// بازیابی رنگ/تم در اولین نمایش صفحه
-if (userPrefs.theme) document.documentElement.dataset.theme = userPrefs.theme;
-if (userPrefs.primary) document.documentElement.style.setProperty('--primary', userPrefs.primary);
+// بازیابی رنگ/تم و رفتارهای عمومی رابط
+document.documentElement.dataset.theme = userPrefs.theme || 'aero';
+applyAccent(userPrefs.primary || DEFAULT_ACCENT);
+$('messages').addEventListener('scroll', () => { stickToBottom = isNearBottom($('messages')); }, { passive: true });
+document.addEventListener('pointerdown', event => {
+  if (event.button > 0) return;
+  const target = event.target.closest?.('.btn,.icon-btn,.setting-row,.nav-item,.action-row,.send-btn,.fab,.call-control,.avatar-choice');
+  if (!target || target.disabled) return;
+  const rect = target.getBoundingClientRect(); const size = Math.max(rect.width, rect.height) * 2;
+  const dot = document.createElement('span'); dot.className = 'ripple';
+  dot.style.cssText = `width:${size}px;height:${size}px;left:${event.clientX - rect.left - size / 2}px;top:${event.clientY - rect.top - size / 2}px`;
+  target.appendChild(dot);
+  setTimeout(() => dot.remove(), 800);
+}, { passive: true });
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden || !currentUserData) return;
+  if (currentChatId && currentChatType !== 'bot') scheduleMessageRefresh(currentChatId);
+  scheduleChatListRefresh();
+});
 </script>
 </body>
 </html>
