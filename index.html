@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#a7ef45">
-<title>Limo Chat | نسخه 1.10</title>
+<title>Limo Chat</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -174,15 +174,28 @@ button{cursor:pointer}
 .image-actions button{flex:1}
 .report-note{font-size:11px;color:var(--muted);line-height:1.9}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* v1.11 interaction and motion refinement */
+.screen{will-change:opacity,transform}
+.chat-row{transform:translateZ(0)}
+.chat-row:hover{background:var(--primary-soft);transform:translateY(-1px)}
+.icon-btn,.btn,.send-btn,.fab,.nav-item,.setting-row{transition:transform .2s cubic-bezier(.2,.8,.2,1),background-color .24s ease,box-shadow .24s ease,color .24s ease}
+.send-btn{box-shadow:0 5px 14px rgba(112,177,45,.22)}
+.send-btn:active{transform:scale(.9) rotate(-8deg)}
+.message{animation:msgIn .24s cubic-bezier(.2,.8,.2,1) both}
+.messages{scroll-behavior:smooth}
+.field input:focus,.plain-input:focus,.message-input:focus{transition:box-shadow .2s ease,border-color .2s ease}
+@media(hover:hover){.btn:hover,.fab:hover{filter:brightness(1.04);box-shadow:0 10px 24px rgba(100,180,38,.24)}}
+
 </style>
 </head>
 <body>
 <div id="app">
   <section id="screen-splash" class="screen splash active"><div class="logo"><i class="fa-solid fa-lemon"></i></div><h1>لیمو چت</h1><p>گفت‌وگویی تازه، ساده و سبز</p></section>
-  <section id="screen-auth" class="screen auth-screen"><div class="auth-card"><div class="brand-mark"><i class="fa-solid fa-lemon"></i></div><h1 class="auth-title" id="auth-title">ورود به لیمو چت</h1><p class="auth-sub" id="auth-sub">با آیدی و رمز عبور یا حساب گوگل وارد شوید.</p><div class="field"><i class="fa-solid fa-user"></i><input id="auth-username" autocomplete="username" placeholder="آیدی کاربری" dir="ltr"></div><div class="field"><i class="fa-solid fa-lock"></i><input id="auth-password" type="password" autocomplete="current-password" placeholder="رمز عبور (حداقل ۶ کاراکتر)" dir="ltr"></div><button class="btn full" id="auth-submit" onclick="handleAuth()">ورود</button><button class="btn full google" onclick="loginWithGoogle()"><i class="fa-brands fa-google"></i> ورود با حساب گوگل</button><p class="auth-switch" onclick="toggleAuthMode()"><span id="auth-switch-text">حساب ندارید؟ <b>ثبت‌نام کنید</b></span></p><p class="tiny-note">ورود با آیدی و رمز عبور یا Google انجام می‌شود. ورود گوگل به فعال‌سازی Google Provider در Supabase نیاز دارد.</p></div></section>
+  <section id="screen-auth" class="screen auth-screen"><div class="auth-card"><div class="brand-mark"><i class="fa-solid fa-lemon"></i></div><h1 class="auth-title" id="auth-title">ورود به لیمو چت</h1><p class="auth-sub" id="auth-sub">با آیدی و رمز عبور یا حساب گوگل وارد شوید.</p><div class="field"><i class="fa-solid fa-user"></i><input id="auth-username" autocomplete="username" placeholder="آیدی کاربری" dir="ltr"></div><div class="field"><i class="fa-solid fa-lock"></i><input id="auth-password" type="password" autocomplete="current-password" placeholder="رمز عبور (حداقل ۶ کاراکتر)" dir="ltr"></div><button class="btn full" id="auth-submit" onclick="handleAuth()">ورود</button><button class="btn full google" onclick="loginWithGoogle()"><i class="fa-brands fa-google"></i> ورود با حساب گوگل</button><p class="auth-switch" onclick="toggleAuthMode()"><span id="auth-switch-text">حساب ندارید؟ <b>ثبت‌نام کنید</b></span></p><p class="tiny-note">ورود با آیدی و رمز عبور یا حساب گوگل انجام می‌شود.</p></div></section>
   <section id="screen-main" class="screen"><header class="topbar"><div class="top-title">لیمو چت</div><div class="top-actions"><button class="icon-btn" aria-label="جستجو" onclick="openSubMenu('search')"><i class="fa-solid fa-magnifying-glass"></i></button><button class="icon-btn" aria-label="مخاطبان" onclick="openSubMenu('contacts')"><i class="fa-solid fa-user-group"></i></button><button class="icon-btn" aria-label="تنظیمات" onclick="switchTab('settings')"><i class="fa-solid fa-gear"></i></button></div></header><div class="scroll-area" id="chat-list"></div><button class="fab" onclick="openSubMenu('search')" aria-label="شروع گفتگو"><i class="fa-solid fa-pen"></i></button></section>
   <section id="screen-calls" class="screen"><header class="topbar"><div class="top-title" style="color:var(--text)">تماس‌ها</div><button class="icon-btn" onclick="refreshCalls()"><i class="fa-solid fa-rotate"></i></button></header><div class="calls-content" id="calls-list"><div class="empty-state"><i class="fa-solid fa-phone"></i><p>تماس‌های صوتی یک‌به‌یک در این بخش نمایش داده می‌شوند.</p></div></div></section>
-  <section id="screen-settings" class="screen"><header class="topbar"><div class="top-title" style="color:var(--text)">تنظیمات</div></header><div class="settings-scroll"><div class="profile-card" onclick="openSubMenu('account')"><div class="avatar" id="settings-avatar">ل</div><div class="profile-copy"><strong id="settings-name">کاربر لیمو</strong><small id="settings-username">@user</small></div><i class="fa-solid fa-chevron-left" style="color:var(--muted)"></i></div><div class="section-label">حساب و حریم خصوصی</div><div class="setting-row" onclick="openSubMenu('account')"><i class="fa-solid fa-user-gear"></i><span>حساب کاربری، آیدی و رمز عبور</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('privacy')"><i class="fa-solid fa-shield-halved"></i><span>حریم خصوصی و چت ایمن</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('blocked')"><i class="fa-solid fa-ban"></i><span>کاربران مسدودشده</span><i class="fa-solid fa-chevron-left"></i></div><div class="section-label">شخصی‌سازی و برنامه</div><div class="setting-row" onclick="openSubMenu('theme')"><i class="fa-solid fa-palette"></i><span>تم مات Aero و ظاهر</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('notifications')"><i class="fa-solid fa-bell"></i><span>اعلان‌ها</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('contacts')"><i class="fa-solid fa-address-book"></i><span>مخاطبان و دعوت دوستان</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('data')"><i class="fa-solid fa-database"></i><span>داده‌ها و ذخیره‌سازی</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('about')"><i class="fa-solid fa-circle-info"></i><span>درباره لیمو چت</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="logout()" style="color:var(--danger)"><i class="fa-solid fa-right-from-bracket" style="color:var(--danger)"></i><span>خروج از حساب</span></div><p class="tiny-note">Limo Chat v1.10</p></div></section>
+  <section id="screen-settings" class="screen"><header class="topbar"><div class="top-title" style="color:var(--text)">تنظیمات</div></header><div class="settings-scroll"><div class="profile-card" onclick="openSubMenu('account')"><div class="avatar" id="settings-avatar">ل</div><div class="profile-copy"><strong id="settings-name">کاربر لیمو</strong><small id="settings-username">@user</small></div><i class="fa-solid fa-chevron-left" style="color:var(--muted)"></i></div><div class="section-label">حساب و حریم خصوصی</div><div class="setting-row" onclick="openSubMenu('account')"><i class="fa-solid fa-user-gear"></i><span>حساب کاربری، آیدی و رمز عبور</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('privacy')"><i class="fa-solid fa-shield-halved"></i><span>حریم خصوصی و چت ایمن</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('blocked')"><i class="fa-solid fa-ban"></i><span>کاربران مسدودشده</span><i class="fa-solid fa-chevron-left"></i></div><div class="section-label">شخصی‌سازی و برنامه</div><div class="setting-row" onclick="openSubMenu('theme')"><i class="fa-solid fa-palette"></i><span>تم مات Aero و ظاهر</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('notifications')"><i class="fa-solid fa-bell"></i><span>اعلان‌ها</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('contacts')"><i class="fa-solid fa-address-book"></i><span>مخاطبان و دعوت دوستان</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('data')"><i class="fa-solid fa-database"></i><span>داده‌ها و ذخیره‌سازی</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="openSubMenu('about')"><i class="fa-solid fa-circle-info"></i><span>درباره لیمو چت</span><i class="fa-solid fa-chevron-left"></i></div><div class="setting-row" onclick="logout()" style="color:var(--danger)"><i class="fa-solid fa-right-from-bracket" style="color:var(--danger)"></i><span>خروج از حساب</span></div><p class="tiny-note">Limo Chat v1.11</p></div></section>
   <section id="screen-chat-room" class="screen"><header class="chat-header"><button class="icon-btn" onclick="closeChatRoom()"><i class="fa-solid fa-arrow-right"></i></button><div class="avatar" id="room-avatar">ل</div><div class="chat-head-info"><div class="chat-head-name" id="room-name">گفتگو</div><div class="chat-head-status" id="room-status">پیام‌رسانی</div></div><div class="chat-header-actions"><button class="icon-btn" id="call-button" onclick="startVoiceCall()" title="تماس صوتی"><i class="fa-solid fa-phone"></i></button><button class="icon-btn" onclick="openChatActions()" title="گزینه‌ها"><i class="fa-solid fa-ellipsis-vertical"></i></button></div></header><div class="messages" id="messages"></div><div class="reply-preview" id="reply-preview"><span id="reply-preview-text"></span><button class="icon-btn" style="width:25px;height:25px" onclick="clearReply()"><i class="fa-solid fa-xmark"></i></button></div><div class="input-area"><button class="attach-btn" onclick="document.getElementById('image-file').click()" title="ارسال عکس"><i class="fa-regular fa-image"></i></button><input id="image-file" type="file" accept="image/*" hidden onchange="chooseImage(event)"><input class="message-input" id="message-input" placeholder="پیام بنویسید..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"><button class="send-btn" onclick="sendMessage()" aria-label="ارسال"><i class="fa-solid fa-paper-plane"></i></button></div></section>
   <nav class="bottom-nav hidden" id="bottom-nav" aria-hidden="true"><div class="nav-item active" onclick="switchTab('main',this)"><i class="fa-solid fa-comments"></i><span>چت‌ها</span></div><div class="nav-item" onclick="switchTab('calls',this)"><i class="fa-solid fa-phone"></i><span>تماس‌ها</span></div><div class="nav-item" onclick="switchTab('settings',this)"><i class="fa-solid fa-gear"></i><span>تنظیمات</span></div></nav>
   <div class="submenu" id="submenu"><header class="submenu-head"><button onclick="closeSubMenu()"><i class="fa-solid fa-arrow-right"></i></button><span id="submenu-title">تنظیمات</span></header><div class="submenu-body" id="submenu-body"></div></div>
@@ -293,9 +306,57 @@ function badLanguage(text) {
   return blocked.some(word => normalized.includes(word.replace(/[\s‌]/g,'')));
 }
 function profanityCheck(text) { if (badLanguage(text)) { showToast('لطفاً از الفاظ توهین‌آمیز استفاده نکنید.'); return false; } return true; }
+
+// رابط کاربری: سقف سریع محلی. کنترل قطعی و مشترک همه دستگاه‌ها در PostgreSQL trigger است.
+const SEND_LIMIT = 5;
+const SEND_WINDOW_MS = 30_000;
+let localSendTimestamps = [];
+let messageSendInProgress = false;
+function pruneLocalSendTimes() {
+  const now = Date.now();
+  localSendTimestamps = localSendTimestamps.filter(ts => now - ts < SEND_WINDOW_MS);
+}
+function canSendMessageLocally() {
+  pruneLocalSendTimes();
+  if (localSendTimestamps.length >= SEND_LIMIT) {
+    const remaining = Math.max(1, Math.ceil((SEND_WINDOW_MS - (Date.now() - localSendTimestamps[0])) / 1000));
+    showToast(`محدودیت ارسال فعال است؛ ${remaining} ثانیه دیگر تلاش کنید.`);
+    return false;
+  }
+  return true;
+}
+function noteMessageSentLocally() { localSendTimestamps.push(Date.now()); }
+function friendlyMessageError(error) {
+  const code = String(error?.code || '');
+  const detail = String(error?.message || '').toLowerCase();
+  if (code === 'P0001' || detail.includes('limo_rate_limit') || detail.includes('rate limit'))
+    return 'برای جلوگیری از پیام انبوه، حداکثر ۵ پیام در هر ۳۰ ثانیه مجاز است.';
+  if (code === '42501' || detail.includes('row-level security') || detail.includes('permission denied'))
+    return 'اجازهٔ ارسال پیام در این گفتگو وجود ندارد. عضویت و دسترسی حساب را بررسی کنید.';
+  if (code === '23503' || detail.includes('foreign key'))
+    return 'این گفتگو دیگر معتبر نیست. از فهرست گفتگوها دوباره آن را باز کنید.';
+  if (code === '42P01' || code === 'PGRST205' || detail.includes('does not exist') || detail.includes('schema cache'))
+    return 'ساختار سرویس پیام‌رسان کامل نصب نشده است. مدیر برنامه باید به‌روزرسانی دیتابیس را اجرا کند.';
+  if (detail.includes('failed to fetch') || detail.includes('network'))
+    return 'ارتباط برقرار نشد. اینترنت را بررسی و دوباره تلاش کنید.';
+  return 'ارسال پیام انجام نشد. لطفاً دوباره تلاش کنید.';
+}
+function friendlyChatError(error) {
+  const code = String(error?.code || '');
+  const detail = String(error?.message || '').toLowerCase();
+  if (code === '42501' || detail.includes('permission denied') || detail.includes('row-level security'))
+    return 'دسترسی ساخت گفتگو رد شد. مدیر برنامه باید تنظیمات دسترسی دیتابیس را بررسی کند.';
+  if (code === 'PGRST202' || detail.includes('create_direct_chat') || detail.includes('schema cache'))
+    return 'قابلیت ساخت گفتگوی خصوصی روی سرور آماده نیست. مدیر برنامه باید به‌روزرسانی دیتابیس را اجرا کند.';
+  if (detail.includes('user_blocked')) return 'امکان گفتگو با این کاربر وجود ندارد.';
+  if (detail.includes('user_not_found')) return 'این کاربر دیگر در دسترس نیست.';
+  if (detail.includes('failed to fetch') || detail.includes('network')) return 'ارتباط برقرار نشد. اینترنت را بررسی کنید.';
+  return 'ساخت گفتگو انجام نشد. لطفاً دوباره تلاش کنید.';
+}
+
 function showNotification(title, body) {
   if (userPrefs.notifications && 'Notification' in window && Notification.permission === 'granted' && document.hidden) {
-    try { new Notification(title, { body, icon: 'https://limochat.pages.dev/favicon.ico' }); } catch {}
+    try { new Notification(title, { body, icon: 'https://xdevelopre.github.io/limochat/favicon.ico' }); } catch {}
   }
 }
 function createAvatar(target, value) {
@@ -460,17 +521,17 @@ async function initializeSession(session) {
     const lower = detail.toLowerCase();
     let userMessage;
     if (/relation .* does not exist|could not find the table|profiles.*not found/i.test(detail)) {
-      userMessage = 'جدول profiles در دیتابیس پیدا نشد. ابتدا supabase-schema.sql را در SQL Editor اجرا کنید.';
+      userMessage = 'اطلاعات حساب هنوز آماده نیست. لطفاً با پشتیبانی تماس بگیرید.';
     } else if (code === 'PGRST202' || lower.includes('ensure_limo_profile') && (lower.includes('not found') || lower.includes('schema cache'))) {
-      userMessage = 'تابع اصلاح پروفایل نصب نشده است. فایل supabase-profile-repair.sql را در SQL Editor اجرا کنید.';
+      userMessage = 'اطلاعات حساب هنوز آماده نیست. لطفاً با پشتیبانی تماس بگیرید.';
     } else if (code === '42501' || lower.includes('row-level security') || lower.includes('permission denied')) {
-      userMessage = 'دسترسی دیتابیس برای پروفایل رد شد. فایل supabase-profile-repair.sql را در SQL Editor اجرا کنید.';
+      userMessage = 'دسترسی به اطلاعات حساب ممکن نیست. لطفاً دوباره تلاش کنید.';
     } else if (detail.startsWith('PROFILE_ROW_MISSING') || detail.startsWith('PROFILE_DATA_INVALID')) {
-      userMessage = 'پروفایل حساب در دیتابیس کامل نیست. فایل supabase-profile-repair.sql را اجرا و دوباره تلاش کنید.';
+      userMessage = 'اطلاعات حساب کامل بارگذاری نشد. لطفاً دوباره تلاش کنید.';
     } else if (lower.includes('failed to fetch') || lower.includes('network')) {
-      userMessage = 'ارتباط با Supabase برقرار نشد. اینترنت، آدرس پروژه و وضعیت Supabase را بررسی کنید.';
+      userMessage = 'ارتباط با سرویس برقرار نشد. اتصال اینترنت را بررسی کنید.';
     } else {
-      userMessage = 'ورود تأیید شد، اما دریافت پروفایل انجام نشد: ' + detail.slice(0, 180);
+      userMessage = 'ورود انجام شد، اما بارگذاری اطلاعات حساب کامل نشد. دوباره تلاش کنید.';
     }
     showToast(userMessage);
     openAuth();
@@ -490,7 +551,7 @@ window.handleAuth = async () => {
   const button = $('auth-submit');
   if (!/^[a-z0-9_.]{3,24}$/.test(username)) return showToast('آیدی باید ۳ تا ۲۴ حرف انگلیسی، عدد یا _ و . باشد');
   if (password.length < 6) return showToast('رمز عبور باید حداقل ۶ کاراکتر باشد');
-  button.disabled = true; button.textContent = 'در حال اتصال به Supabase...';
+  button.disabled = true; button.textContent = isLoginMode ? 'در حال ورود...' : 'در حال ساخت حساب...';
   try {
     if (isLoginMode) {
       const { data, error } = await supabase.auth.signInWithPassword({ email: userEmail(username), password });
@@ -500,7 +561,7 @@ window.handleAuth = async () => {
         if (ready && currentUserData) showToast('با موفقیت وارد شدید');
         // در صورت شکست بازیابی پروفایل، پیام تشخیصی initializeSession حفظ می‌شود.
       } else {
-        throw new Error('ورود انجام شد اما نشست معتبری از Supabase دریافت نشد.');
+        throw new Error('ورود انجام شد اما نشست کاربری فعال نشد.');
       }
     } else {
       const { data, error } = await supabase.auth.signUp({
@@ -513,7 +574,7 @@ window.handleAuth = async () => {
         if (ready && currentUserData) showToast('حساب شما ساخته شد');
         // خطای پروفایل قبلاً با علت دقیق نمایش داده شده است.
       } else {
-        showToast('حساب ثبت شد اما نشست ساخته نشد. تأیید ایمیل Supabase را بررسی کنید؛ سپس پس از تأیید حساب، وارد شوید.');
+        showToast('حساب ثبت شد اما نشست فعال نشد. تنظیمات تأیید حساب را بررسی کنید و سپس وارد شوید.');
       }
     }
   } catch (error) {
@@ -521,15 +582,15 @@ window.handleAuth = async () => {
     const message = String(error.message || '').toLowerCase();
     if (message.includes('already registered') || message.includes('already been registered') || message.includes('duplicate')) showToast('این آیدی قبلاً ثبت شده است');
     else if (message.includes('invalid login credentials')) showToast('آیدی یا رمز عبور اشتباه است');
-    else if (message.includes('email not confirmed')) showToast('تأیید ایمیل فعال است؛ برای ورود با آیدی، Confirm email را در Supabase خاموش کنید.');
-    else showToast('اتصال یا عملیات حساب ناموفق بود: ' + (error.message || 'خطای نامشخص'));
+    else if (message.includes('email not confirmed')) showToast('حساب هنوز تأیید نشده است. تنظیمات تأیید حساب را بررسی کنید.');
+    else showToast('ورود یا ساخت حساب انجام نشد. اطلاعات را بررسی و دوباره تلاش کنید.');
   } finally { button.disabled = false; button.textContent = isLoginMode ? 'ورود' : 'ساخت حساب'; }
 };
 window.loginWithGoogle = async () => {
   try {
     const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } });
     if (error) throw error;
-  } catch (error) { console.error(error); showToast('ورود گوگل انجام نشد؛ ابتدا Google Provider و Redirect URL را در Supabase تنظیم کنید.'); }
+  } catch (error) { console.error(error); showToast('ورود با گوگل در حال حاضر در دسترس نیست.'); }
 };
 window.logout = async () => {
   if (!confirm('از حساب کاربری خارج می‌شوید؟')) return;
@@ -577,8 +638,8 @@ async function loadChatList() {
       .subscribe();
   } catch (error) {
     console.error('Chat list:', error);
-    container.innerHTML = '<div class="empty-state"><i class="fa-regular fa-comments"></i><p>دریافت گفتگوها ناموفق بود. اتصال Supabase و سیاست‌های RLS را بررسی کنید.</p></div>';
-    showToast('دریافت گفتگوها از Supabase ناموفق بود');
+    container.innerHTML = '<div class="empty-state"><i class="fa-regular fa-comments"></i><p>بارگذاری گفتگوها انجام نشد. لطفاً دوباره تلاش کنید.</p></div>';
+    showToast('بارگذاری گفتگوها انجام نشد. اتصال اینترنت را بررسی کنید.');
   }
 }
 function renderChatList(chats = []) {
@@ -659,7 +720,7 @@ async function loadMessages(chatId) {
     if (currentChatType === 'private' && userPrefs.readReceipts) supabase.rpc('mark_chat_messages_read', { target_chat: chatId }).then(({ error }) => { if (error) console.warn('Read receipts:', error.message); });
   } catch (error) {
     console.error('Messages:', error);
-    container.innerHTML = '<div class="empty-state"><p>پیام‌ها دریافت نشدند. دسترسی جدول پیام‌ها و Supabase Realtime را بررسی کنید.</p></div>';
+    container.innerHTML = '<div class="empty-state"><p>دریافت پیام‌ها انجام نشد. لطفاً دوباره تلاش کنید.</p></div>';
   }
 }
 async function renderMessagesFromServer(chatId) {
@@ -702,22 +763,55 @@ async function renderMessage(message) {
   container.appendChild(wrap);
 }
 window.sendMessage = async () => {
-  const input = $('message-input'); const text = input.value.trim();
-  if (!text || !currentChatId) return;
+  const input = $('message-input');
+  const text = input.value.trim();
+  if (!text || !currentChatId || messageSendInProgress) return;
+  if (!currentUserData) return showToast('برای ارسال پیام ابتدا وارد حساب شوید.');
   if (!profanityCheck(text)) return;
-  if (currentChatType === 'private') { const other = currentChatParticipants.find(uid => uid !== currentUserData.uid); if (other && isBlocked(other)) return showToast('این کاربر را مسدود کرده‌اید'); }
-  if (currentChatType === 'bot') { input.value = ''; await addBotMessage(text, true); return; }
-  input.value = '';
-  const payload = { sender_id: currentUserData.uid, sender_name: userPrefs.anonymous ? 'کاربر ناشناس' : currentUserData.displayName, text, status: 'sent' };
+  if (currentChatType === 'private') {
+    const other = currentChatParticipants.find(uid => uid !== currentUserData.uid);
+    if (other && isBlocked(other)) return showToast('این کاربر را مسدود کرده‌اید');
+  }
+  if (currentChatType === 'bot') {
+    input.value = '';
+    await addBotMessage(text, true);
+    return;
+  }
+  if (!canSendMessageLocally()) return;
+
+  messageSendInProgress = true;
+  const sendButton = document.querySelector('.send-btn');
+  if (sendButton) sendButton.disabled = true;
+  const payload = {
+    sender_id: currentUserData.uid,
+    sender_name: userPrefs.anonymous ? 'کاربر ناشناس' : currentUserData.displayName,
+    text,
+    status: 'sent'
+  };
   if (currentChatType === 'private') payload.chat_id = currentChatId;
   if (replyTarget) payload.reply_to = { id: replyTarget.id, text: replyTarget.text || 'تصویر' };
-  const { error } = await supabase.from(messageTable()).insert(payload);
-  if (error) { console.error(error); input.value = text; showToast('ارسال پیام ناموفق بود: ' + error.message); return; }
-  if (currentChatType === 'private') {
-    const { error: chatError } = await supabase.from('chats').update({ last_message: text.slice(0,120), updated_at: new Date().toISOString() }).eq('id', currentChatId);
-    if (chatError) console.warn('Updating chat preview:', chatError.message);
+
+  try {
+    const { error } = await supabase.from(messageTable()).insert(payload);
+    if (error) throw error;
+    noteMessageSentLocally();
+    input.value = '';
+    window.clearReply();
+    // Preview update is secondary: its failure must not misreport a successfully stored message.
+    if (currentChatType === 'private') {
+      const { error: chatError } = await supabase.from('chats')
+        .update({ last_message: text.slice(0,120), updated_at: new Date().toISOString() })
+        .eq('id', currentChatId);
+      if (chatError) console.warn('Chat preview update failed:', chatError);
+    }
+    void renderMessagesFromServer(currentChatId);
+  } catch (error) {
+    console.error('Message insert failed:', { code: error?.code, message: error?.message, details: error?.details, hint: error?.hint });
+    showToast(friendlyMessageError(error));
+  } finally {
+    messageSendInProgress = false;
+    if (sendButton) sendButton.disabled = false;
   }
-  window.clearReply();
 };
 window.openMessageActions = message => {
   activeMessage = message;
@@ -796,15 +890,19 @@ window.startPrivateChat = async (otherUid, otherName, otherAvatar = null) => {
   try {
     const { data: chatId, error } = await supabase.rpc('create_direct_chat', { target_user: otherUid });
     if (error) throw error;
-    const { data: members, error: memberError } = await supabase.from('chat_members').select('user_id').eq('chat_id', chatId);
-    if (memberError) throw memberError;
-    const participants = (members || []).map(row => row.user_id);
-    window.closeSubMenu(); await window.openChatRoom(chatId, otherName || 'گفتگوی خصوصی', otherAvatar || otherName?.[0] || 'ل', participants, 'private');
-  } catch (error) { console.error(error); showToast('ساخت گفتگو ناموفق بود: ' + error.message); }
+    if (!chatId || typeof chatId !== 'string') throw new Error('CHAT_ID_EMPTY');
+    // create_direct_chat inserts both participants atomically; avoid an extra membership query here.
+    const participants = [currentUserData.uid, otherUid];
+    window.closeSubMenu();
+    await window.openChatRoom(chatId, otherName || 'گفتگوی خصوصی', otherAvatar || otherName?.[0] || 'ل', participants, 'private');
+  } catch (error) {
+    console.error('Create direct chat failed:', { code: error?.code, message: error?.message, details: error?.details, hint: error?.hint });
+    showToast(friendlyChatError(error));
+  }
 };
 window.searchUser = async () => {
   const username = normalizeUsername($('search-username').value); const root = $('search-results'); if (!username) return;
-  root.textContent = 'در حال جستجو در Supabase...';
+  root.textContent = 'در حال جستجو...';
   try {
     const { data: user, error } = await supabase.from('profiles').select('id,username,display_name,avatar_url').eq('username', username).maybeSingle();
     if (error) throw error;
@@ -818,10 +916,10 @@ window.searchUser = async () => {
     const id = document.createElement('small'); id.textContent = '@' + user.username; info.append(name,id);
     const button = document.createElement('button'); button.className = 'btn'; button.textContent = 'پیام'; button.onclick = () => window.startPrivateChat(user.id, user.display_name || user.username, user.avatar_url);
     card.append(avatar, info, button); root.appendChild(card);
-  } catch (error) { console.error(error); root.textContent = 'جستجو در دیتابیس ناموفق بود: ' + error.message; }
+  } catch (error) { console.error(error); root.textContent = 'جستجو انجام نشد. لطفاً دوباره تلاش کنید.'; }
 };
 
-// پردازش تصویر در مرورگر؛ فایل خصوصی در Supabase Storage ذخیره می‌شود.
+// پردازش تصویر در مرورگر؛ فایل خصوصی در فضای ذخیره‌سازی برنامه نگهداری می‌شود.
 window.chooseImage = async event => {
   const file = event.target.files?.[0]; event.target.value = ''; if (!file) return;
   if (!file.type.startsWith('image/')) return showToast('فقط فایل تصویری مجاز است');
@@ -861,20 +959,37 @@ window.updateImageQuality = async value => {
 window.cancelImage = () => { preparedImage = null; $('image-preview').classList.remove('show'); };
 window.sendPreparedImage = async () => {
   if (!preparedImage || !currentChatId) return;
+  if (!canSendMessageLocally()) return;
   if (preparedImage.blob.size > 2 * 1024 * 1024) return showToast('تصویر باید حداکثر ۲ مگابایت باشد');
-  const button = $('send-image-button'); button.disabled = true; button.textContent = 'در حال بارگذاری...';
+  const button = $('send-image-button'); button.disabled = true; button.textContent = 'در حال ارسال...';
+  let uploadedPath = null;
+  let imageMessageInserted = false;
   try {
     const folder = currentChatType === 'global' ? 'global' : currentChatId;
     const path = `${folder}/${currentUserData.uid}/${crypto.randomUUID()}.jpg`;
+    uploadedPath = path;
     const { error: uploadError } = await supabase.storage.from('chat-media').upload(path, preparedImage.blob, { contentType: 'image/jpeg', upsert: false });
     if (uploadError) throw uploadError;
     const payload = { sender_id: currentUserData.uid, sender_name: userPrefs.anonymous ? 'کاربر ناشناس' : currentUserData.displayName, image_path: path, image_name: preparedImage.name, image_size: preparedImage.blob.size, text: '', status: 'sent' };
     if (currentChatType === 'private') payload.chat_id = currentChatId;
     if (replyTarget) payload.reply_to = { id: replyTarget.id, text: replyTarget.text || 'تصویر' };
     const { error } = await supabase.from(messageTable()).insert(payload); if (error) throw error;
-    if (currentChatType === 'private') await supabase.from('chats').update({ last_message: '📷 تصویر', updated_at: new Date().toISOString() }).eq('id', currentChatId);
-    window.cancelImage(); window.clearReply(); showToast('تصویر در Supabase ذخیره و ارسال شد');
-  } catch (error) { console.error(error); showToast('بارگذاری عکس ناموفق بود: ' + error.message); }
+    imageMessageInserted = true;
+    noteMessageSentLocally();
+    if (currentChatType === 'private') {
+      const { error: chatError } = await supabase.from('chats').update({ last_message: '📷 تصویر', updated_at: new Date().toISOString() }).eq('id', currentChatId);
+      if (chatError) console.warn('Chat preview update failed:', chatError);
+    }
+    window.cancelImage(); window.clearReply(); showToast('تصویر ارسال شد');
+    void renderMessagesFromServer(currentChatId);
+  } catch (error) {
+    if (uploadedPath && !imageMessageInserted) {
+      const { error: cleanupError } = await supabase.storage.from('chat-media').remove([uploadedPath]);
+      if (cleanupError) console.warn('Orphan upload cleanup failed:', cleanupError);
+    }
+    console.error('Image message failed:', { code: error?.code, message: error?.message, details: error?.details, hint: error?.hint });
+    showToast(friendlyMessageError(error));
+  }
   finally { button.disabled = false; button.textContent = 'ارسال تصویر'; }
 };
 
@@ -886,7 +1001,7 @@ window.renderSubMenu = key => {
     html = `<div class="setting-card"><h3>اطلاعات نمایه</h3><label>نام نمایشی</label><input class="plain-input" id="profile-name" value="${safe(currentUserData.displayName || '')}" maxlength="40"><label>بیوگرافی</label><input class="plain-input" id="profile-bio" value="${safe(currentUserData.bio || '')}" maxlength="120"><button class="btn full" onclick="saveProfile()">ذخیره نمایه</button></div><div class="setting-card"><h3>تغییر آیدی</h3><p>برای ورود با آیدی جدید، آدرس ورود داخلی حساب نیز به‌روزرسانی می‌شود. تأیید ایمیل باید در تنظیمات Auth خاموش باشد.</p><label>آیدی جدید</label><input class="plain-input" id="new-username" dir="ltr" value="${safe(currentUserData.username || '')}" maxlength="24"><button class="btn full" onclick="changeUsername()">تغییر آیدی</button></div><div class="setting-card"><h3>تغییر رمز عبور</h3><label>رمز فعلی (در صورت داشتن رمز)</label><input class="plain-input" id="old-password" type="password"><label>رمز جدید</label><input class="plain-input" id="new-password" type="password"><label>تکرار رمز جدید</label><input class="plain-input" id="confirm-password" type="password"><button class="btn full" onclick="changePassword()">ذخیره رمز عبور</button></div>`;
   } else if (key === 'privacy') {
     title.textContent = 'حریم خصوصی و چت ایمن';
-    html = `<div class="setting-card"><h3>نمایش و حریم خصوصی</h3><div class="setting-line"><span>نمایش نام من به‌صورت ناشناس در پیام‌های جدید</span><input class="switch" type="checkbox" id="pref-anonymous" ${userPrefs.anonymous ? 'checked' : ''} onchange="setPref('anonymous',this.checked)"></div><div class="setting-line"><span>ارسال رسید خوانده‌شدن پیام‌ها</span><input class="switch" type="checkbox" id="pref-read" ${userPrefs.readReceipts ? 'checked' : ''} onchange="setPref('readReceipts',this.checked)"></div><div class="setting-line"><span>نمایش وضعیت آنلاین در گفتگو</span><input class="switch" type="checkbox" id="pref-online" ${userPrefs.showOnline ? 'checked' : ''} onchange="setPref('showOnline',this.checked)"></div></div><div class="setting-card"><h3>توضیح امنیت</h3><p>حالت ناشناس فقط نام نمایشی پیام‌های جدید را پنهان می‌کند؛ شناسهٔ فرستنده برای مدیریت و امنیت ذخیره می‌شود. این نسخه رمزنگاری سرتاسری (E2EE) ندارد. دسترسی داده‌ها با سیاست‌های RLS در Supabase کنترل می‌شود.</p></div><div class="setting-card"><button class="btn outline full" onclick="openSubMenu('blocked')">مدیریت کاربران مسدودشده</button></div>`;
+    html = `<div class="setting-card"><h3>نمایش و حریم خصوصی</h3><div class="setting-line"><span>نمایش نام من به‌صورت ناشناس در پیام‌های جدید</span><input class="switch" type="checkbox" id="pref-anonymous" ${userPrefs.anonymous ? 'checked' : ''} onchange="setPref('anonymous',this.checked)"></div><div class="setting-line"><span>ارسال رسید خوانده‌شدن پیام‌ها</span><input class="switch" type="checkbox" id="pref-read" ${userPrefs.readReceipts ? 'checked' : ''} onchange="setPref('readReceipts',this.checked)"></div><div class="setting-line"><span>نمایش وضعیت آنلاین در گفتگو</span><input class="switch" type="checkbox" id="pref-online" ${userPrefs.showOnline ? 'checked' : ''} onchange="setPref('showOnline',this.checked)"></div></div><div class="setting-card"><h3>توضیح امنیت</h3><p>حالت ناشناس فقط نام نمایشی پیام‌های جدید را پنهان می‌کند؛ شناسهٔ فرستنده برای مدیریت و امنیت ذخیره می‌شود. این نسخه رمزنگاری سرتاسری (E2EE) ندارد و دسترسی اطلاعات در سمت سرور کنترل می‌شود.</p></div><div class="setting-card"><button class="btn outline full" onclick="openSubMenu('blocked')">مدیریت کاربران مسدودشده</button></div>`;
   } else if (key === 'theme') {
     title.textContent = 'تم و ظاهر'; const theme = document.documentElement.dataset.theme || 'aero';
     html = `<div class="setting-card"><h3>انتخاب پوسته</h3><div class="setting-line"><span>مات Aero (پیشنهادی)</span><input type="radio" name="theme" ${theme === 'aero' ? 'checked' : ''} onchange="setTheme('aero')"></div><div class="setting-line"><span>روشن</span><input type="radio" name="theme" ${theme === 'light' ? 'checked' : ''} onchange="setTheme('light')"></div><div class="setting-line"><span>تیره</span><input type="radio" name="theme" ${theme === 'dark' ? 'checked' : ''} onchange="setTheme('dark')"></div></div><div class="setting-card"><h3>رنگ اصلی</h3><input type="color" id="primary-color" value="${userPrefs.primary || '#91d832'}" style="width:100%;height:48px;border:0;background:transparent" onchange="setPrimaryColor(this.value)"></div>`;
@@ -895,15 +1010,15 @@ window.renderSubMenu = key => {
     html = `<div class="setting-card"><div class="setting-line"><span>فعال بودن اعلان هنگام دریافت پیام در پس‌زمینه</span><input class="switch" type="checkbox" ${userPrefs.notifications ? 'checked' : ''} onchange="toggleNotifications(this.checked)"></div><p>اعلان مرورگر به اجازهٔ سیستم‌عامل و HTTPS نیاز دارد. برای اعلان زمان بسته بودن کامل مرورگر، سرویس Push جداگانه لازم است.</p><button class="btn outline full" onclick="testNotification()">آزمایش اعلان</button></div>`;
   } else if (key === 'contacts') {
     title.textContent = 'مخاطبان و دعوت';
-    html = `<div class="setting-card"><h3>به‌روزرسانی مخاطبان</h3><p>فهرست گفتگوها و کاربران از دیتابیس Supabase تازه‌سازی می‌شود.</p><button class="btn full" onclick="refreshContacts()"><i class="fa-solid fa-rotate"></i> به‌روزرسانی</button></div><div class="setting-card"><h3>دعوت از دوستان</h3><p>لینک برنامه را برای دوستانتان بفرستید.</p><button class="btn full" onclick="inviteFriends()"><i class="fa-solid fa-share-nodes"></i> ارسال دعوت</button><button class="btn outline full" onclick="copyInvite()">کپی لینک دعوت</button></div><div class="setting-card"><h3>جستجو با آیدی</h3><div class="field"><i class="fa-solid fa-at"></i><input id="search-username" dir="ltr" placeholder="مثلاً ali"></div><button class="btn full" onclick="searchUser()">جستجو</button><div id="search-results"></div></div>`;
+    html = `<div class="setting-card"><h3>به‌روزرسانی مخاطبان</h3><p>فهرست گفتگوها و کاربران تازه‌سازی می‌شود.</p><button class="btn full" onclick="refreshContacts()"><i class="fa-solid fa-rotate"></i> به‌روزرسانی</button></div><div class="setting-card"><h3>دعوت از دوستان</h3><p>لینک برنامه را برای دوستانتان بفرستید.</p><button class="btn full" onclick="inviteFriends()"><i class="fa-solid fa-share-nodes"></i> ارسال دعوت</button><button class="btn outline full" onclick="copyInvite()">کپی لینک دعوت</button></div><div class="setting-card"><h3>جستجو با آیدی</h3><div class="field"><i class="fa-solid fa-at"></i><input id="search-username" dir="ltr" placeholder="مثلاً ali"></div><button class="btn full" onclick="searchUser()">جستجو</button><div id="search-results"></div></div>`;
   } else if (key === 'search') {
     title.textContent = 'جستجوی کاربر'; html = `<div class="setting-card"><div class="field"><i class="fa-solid fa-at"></i><input id="search-username" dir="ltr" placeholder="آیدی کاربر را وارد کنید"></div><button class="btn full" onclick="searchUser()">جستجو</button><div id="search-results"></div></div>`;
   } else if (key === 'blocked') {
     title.textContent = 'کاربران مسدودشده'; html = `<div class="setting-card"><p>کاربران مسدودشده از فهرست گفتگو و پیام‌های دریافتی شما پنهان می‌شوند.</p><div id="blocked-list"></div></div>`;
   } else if (key === 'data') {
-    title.textContent = 'داده‌ها و ذخیره‌سازی'; html = `<div class="setting-card"><h3>وضعیت ذخیره‌سازی</h3><p>حساب‌ها و نمایه‌ها، گفتگوها، پیام‌ها، گزارش‌ها، وضعیت تماس‌ها، تنظیمات کاربری و فایل‌های تصویری در Supabase ذخیره می‌شوند. تنظیمات محلی فقط برای نمایش سریع نگهداری می‌شوند.</p><button class="btn outline full" onclick="showStorageInfo()">نمایش اطلاعات ذخیره‌سازی</button><button class="btn outline full" onclick="clearLocalPreferences()">بازنشانی حافظهٔ محلی</button><div id="storage-info" class="help"></div></div>`;
+    title.textContent = 'داده‌ها و ذخیره‌سازی'; html = `<div class="setting-card"><h3>وضعیت ذخیره‌سازی</h3><p>حساب‌ها و نمایه‌ها، گفتگوها، پیام‌ها، گزارش‌ها، وضعیت تماس‌ها، تنظیمات کاربری و فایل‌های تصویری در فضای دادهٔ برنامه ذخیره می‌شوند. تنظیمات محلی فقط برای نمایش سریع نگهداری می‌شوند.</p><button class="btn outline full" onclick="showStorageInfo()">نمایش اطلاعات ذخیره‌سازی</button><button class="btn outline full" onclick="clearLocalPreferences()">بازنشانی حافظهٔ محلی</button><div id="storage-info" class="help"></div></div>`;
   } else if (key === 'about') {
-    title.textContent = 'درباره لیمو چت'; html = `<div class="setting-card" style="text-align:center;padding:26px"><div class="brand-mark"><i class="fa-solid fa-lemon"></i></div><h2>لیمو چت</h2><p>نسخه 1.10</p><p><b>ساخته شده توسط امیرمحمد انصاری جابری</b></p><p>یک پیام‌رسان وب با رابط فارسی، پوسته مات Aero و پایگاه داده Supabase.</p></div>`;
+    title.textContent = 'درباره لیمو چت'; html = `<div class="setting-card" style="text-align:center;padding:26px"><div class="brand-mark"><i class="fa-solid fa-lemon"></i></div><h2>لیمو چت</h2><p>نسخه 1.11</p><p><b>ساخته شده توسط امیرمحمد انصاری جابری</b></p><p>یک پیام‌رسان وب با رابط فارسی و پوسته مات Aero.</p></div>`;
   }
   body.innerHTML = html;
   if (key === 'blocked') window.renderBlockedList();
@@ -957,11 +1072,11 @@ window.changePassword = async () => {
 };
 window.refreshContacts = async () => { await loadChatList(); showToast('فهرست گفتگوها به‌روزرسانی شد'); };
 window.inviteFriends = async () => {
-  const data = { title: 'دعوت به لیمو چت', text: 'به لیمو چت بپیوندید:', url: 'https://limochat.pages.dev/' };
+  const data = { title: 'دعوت به لیمو چت', text: 'به لیمو چت بپیوندید:', url: 'https://xdevelopre.github.io/limochat/' };
   try { if (navigator.share) await navigator.share(data); else { await navigator.clipboard.writeText(data.text + ' ' + data.url); showToast('لینک دعوت کپی شد'); } }
   catch (error) { if (error.name !== 'AbortError') showToast('ارسال دعوت انجام نشد'); }
 };
-window.copyInvite = async () => { try { await navigator.clipboard.writeText('https://limochat.pages.dev/'); showToast('لینک دعوت کپی شد'); } catch { showToast('کپی لینک در این مرورگر ممکن نیست'); } };
+window.copyInvite = async () => { try { await navigator.clipboard.writeText('https://xdevelopre.github.io/limochat/'); showToast('لینک دعوت کپی شد'); } catch { showToast('کپی لینک در این مرورگر ممکن نیست'); } };
 window.renderBlockedList = async () => {
   const root = $('blocked-list'); if (!root) return; root.replaceChildren();
   if (!blockedUsers.length) { root.textContent = 'کاربر مسدودشده‌ای ندارید.'; return; }
@@ -993,21 +1108,21 @@ async function submitReport(report) {
   const record = { reporter_id: currentUserData.uid, reporter_username: currentUserData.username, type: report.type, target_uid: report.targetUid || null, target_name: report.targetName || null, message_id: report.messageId || null, chat_id: report.chatId && report.chatId !== 'global' ? report.chatId : null, reason, content: (report.content || '').slice(0,500), destination: '@Report', status: 'new' };
   const { error } = await supabase.from('reports').insert(record);
   if (error) { console.error(error); showToast('ثبت گزارش در دیتابیس ناموفق بود: ' + error.message); return; }
-  showToast('گزارش در دیتابیس Supabase ثبت شد');
+  showToast('گزارش ثبت شد');
   const text = `گزارش Limo Chat\nنوع: ${report.type}\nگزارش‌دهنده: @${currentUserData.username}\nکاربر هدف: ${report.targetName || report.targetUid || 'نامشخص'}\nدلیل: ${reason}\nمحتوا: ${(report.content || '').slice(0,500)}\nشناسه گفتگو: ${report.chatId || '-'}`;
-  const telegramUrl = 'https://t.me/share/url?url=' + encodeURIComponent('https://limochat.pages.dev/') + '&text=' + encodeURIComponent(text);
+  const telegramUrl = 'https://t.me/share/url?url=' + encodeURIComponent('https://xdevelopre.github.io/limochat/') + '&text=' + encodeURIComponent(text);
   window.open(telegramUrl, '_blank', 'noopener');
 }
 window.reportUser = async (uid, name) => { const reason = prompt(`دلیل گزارش ${name || 'کاربر'} چیست؟`, 'رفتار نامناسب'); if (!reason) return; await submitReport({ type: 'user', targetUid: uid, targetName: name, reason, chatId: currentChatId || '' }); };
 window.showStorageInfo = async () => {
   let cache = 'برآورد مرورگر در دسترس نیست';
   try { if (navigator.storage?.estimate) { const estimate = await navigator.storage.estimate(); cache = `استفاده‌شده: ${formatBytes(estimate.usage || 0)} / سهمیه: ${formatBytes(estimate.quota || 0)}`; } } catch {}
-  $('storage-info').textContent = cache + ' · سرور دیتابیس: Supabase';
+  $('storage-info').textContent = cache + ' · فضای دادهٔ برنامه';
 };
 window.clearLocalPreferences = () => {
   if (!confirm('کش محلی تنظیمات و وضعیت گفتگو پاک شود؟ داده‌های حساب و پیام‌های سرور حذف نمی‌شوند.')) return;
   [prefsKey(),pinKey(),hiddenKey(),botKey()].forEach(key => localStorage.removeItem(key));
-  showToast('حافظهٔ محلی پاک شد؛ داده‌های Supabase حفظ شدند'); location.reload();
+  showToast('حافظهٔ محلی پاک شد؛ اطلاعات حساب حفظ شدند'); location.reload();
 };
 
 // ربات محلی: متن‌های آن هم در جدول bot_messages حساب ذخیره می‌شوند.
@@ -1049,7 +1164,7 @@ function botReply(text) {
   const value = text.toLowerCase();
   if (/سلام|درود|hi|hello/.test(value)) return 'سلام! خوشحالم که اینجایی 😊 چه کمکی از دستم برمی‌آید؟';
   if (/تنظیم|تم|ظاهر/.test(value)) return 'برای تغییر ظاهر به تنظیمات ← تم و ظاهر برو و پوسته Aero، روشن یا تیره را انتخاب کن.';
-  if (/عکس|تصویر/.test(value)) return 'در گفتگوی خصوصی یا عمومی روی آیکون تصویر بزن. عکس در مرورگر فشرده و در فضای خصوصی Supabase Storage ذخیره می‌شود.';
+  if (/عکس|تصویر/.test(value)) return 'در گفتگوی خصوصی یا عمومی روی آیکون تصویر بزن. عکس در مرورگر کم‌حجم و در فضای خصوصی برنامه ذخیره می‌شود.';
   if (/تماس|زنگ/.test(value)) return 'در گفتگوی خصوصی، آیکون تلفن بالای صفحه را بزن. تماس به اجازه میکروفون و تنظیمات Realtime و جداول calls نیاز دارد.';
   if (/امن|ناشناس|حریم/.test(value)) return 'در تنظیمات ← حریم خصوصی می‌توانی نمایش ناشناس نام و رسید خواندن را مدیریت کنی. این نسخه رمزنگاری سرتاسری ندارد.';
   if (/گزارش|مسدود/.test(value)) return 'برای گزارش یا مسدودسازی، روی گفتگو چند لحظه نگه دار یا منوی سه‌نقطه را در صفحه چت باز کن.';
@@ -1057,7 +1172,7 @@ function botReply(text) {
   return 'متوجه شدم 🌱 من نسخه راهنمای محلی لیمو بات هستم و هنوز به مدل هوش مصنوعی آنلاین متصل نیستم. می‌توانی درباره تنظیمات، تماس، عکس، امنیت یا حساب کاربری سؤال کنی.';
 }
 
-// تماس صوتی WebRTC؛ سیگنالینگ و نامزدهای ICE در جداول Supabase ذخیره می‌شوند.
+// تماس صوتی WebRTC؛ اطلاعات برقراری تماس در سرور برنامه نگهداری می‌شود.
 function otherParticipant() { return currentChatParticipants.find(uid => uid !== currentUserData.uid); }
 function showCallScreen(name, status, incoming = false) {
   $('call-name').textContent = name || 'کاربر'; $('call-status').textContent = status;
