@@ -1,20 +1,25 @@
 {
-  "name": "Limo Chat",
-  "short_name": "Limo",
-  "description": "پیام‌رسان لیمو چت",
+  "id": "./",
+  "name": "Limo Chat 2.01 — لیمو چت ۲.۰۱",
+  "short_name": "Limo Chat 2.01",
+  "description": "پیام‌رسان لیمو چت ۲.۰۱؛ ارتباطات، گروه‌ها و فضای همکاری",
   "lang": "fa",
   "dir": "rtl",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
   "background_color": "#eef3e9",
   "theme_color": "#a7ef45",
+  "categories": ["social", "communication"],
   "icons": [
-    {
-      "src": "favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "گفتگوها", "short_name": "چت‌ها", "url": "./index.html", "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }] },
+    { "name": "جهان لیمو", "short_name": "World", "url": "./index.html?open=world", "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }] }
   ]
 }
