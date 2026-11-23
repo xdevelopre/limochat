@@ -1,0 +1,20 @@
+{
+  "name": "Limo Chat",
+  "short_name": "Limo",
+  "description": "پیام‌رسان لیمو چت",
+  "lang": "fa",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef3e9",
+  "theme_color": "#a7ef45",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
