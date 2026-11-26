@@ -1,89 +1,56 @@
-# راهنمای ارتقای Limo Chat 2.0 به 2.01
+# Supabase setup — Limo Chat 2.04
 
-این راهنما برای دیتابیسی است که SQL نسخه ۲.۰ را قبلاً اجرا کرده‌ای و فایل‌های نسخه ۲.۰۱ را روی GitHub Pages منتشر می‌کنی.
+## Migration order
 
-## ۱. پیش از SQL
+Run only `limochat-v2.04-migration.sql` after confirming the existing 2.0 base schema and 2.01, 2.02, 2.03 migrations have already been applied. Back up first. The migration is additive and does not drop or truncate existing user/chat/message data.
 
-1. وارد همان پروژه Supabase شو.
-2. یک backup از دیتابیس بگیر.
-3. فایل `limochat-v2.01-migration.sql` را باز کن.
-4. تمام محتوای آن را یک‌جا در SQL Editor قرار بده و فقط یک بار اجرا کن.
-5. اگر خطا دریافت شد، ادامه مراحل را متوقف کن و متن کامل خطا را نگه دار.
+## Session registry
 
-**مهم:** چون نسخه ۲.۰ قبلاً نصب شده، فایل `limochat-v2.0.sql` را دوباره اجرا نکن. فایل ۲.۰ فقط برای نصب تازه یا مرجع نگهداری شده است.
+The migration creates `public.limo_device_sessions`, owner-only SELECT RLS, and two owner-checked RPCs:
 
-## ۲. تنظیم Storage برای Premium media
+- `limo_register_device_session(uuid,text,text)` registers the current app tab/device.
+- `limo_revoke_device_session(uuid)` marks one of the current user's app sessions revoked.
 
-مهاجرت SQL bucket `chat-media` را Private نگه می‌دارد و سقف bucket را روی ۴۰ مگابایت تنظیم می‌کند.
+The table is added to `supabase_realtime` where that publication exists. If your project reports that publication is unavailable, enable Realtime for `limo_device_sessions` in Supabase Dashboard.
 
-در Supabase Dashboard → Storage → Settings، مقدار Global file size limit را حداقل ۴۰ مگابایت قرار بده. سقف جهانی پلن Free طبق مستندات Supabase حداکثر ۵۰ مگابایت است؛ بنابراین اگر تنظیم global کمتر از ۴۰ مگابایت باشد، ویدئوهای بزرگ‌تر از آن مقدار رد می‌شوند.
+## Trusted IP capture (recommended)
 
-فرمت‌های پشتیبانی‌شده در مهاجرت:
-- تصویر: JPEG، PNG، WebP
-- صدا: WebM، OGG، MP4، MPEG، AAC
-- ویدئو: MP4، WebM، QuickTime
+The browser cannot reliably discover its public IP without a network service. Deploy the included Edge Function source:
 
-حداکثرهای برنامه: تصویر ۵MB، صدا ۵MB، ویدئو ۴۰MB. فضای Storage را Private نگه دار و هیچ فایل رسانه‌ای را با bucket عمومی منتشر نکن.
+1. In your Supabase project create a function named `limo-session-manager`.
+2. Put the contents of `limo-session-manager.ts` in `supabase/functions/limo-session-manager/index.ts` in a Supabase CLI project, then deploy it (`supabase functions deploy limo-session-manager`).
+3. Ensure the function environment has `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY`. Supabase supplies project secrets; if required, configure them in Edge Function secrets.
+4. Do not expose `SUPABASE_SERVICE_ROLE_KEY` to GitHub Pages or commit it into the repository.
+5. Test by signing in from two separate devices and check `ip_address` in `public.limo_device_sessions`.
 
-## ۳. انتشار فایل‌ها در GitHub
+The Edge Function CORS policy is restricted to `https://xdevelopre.github.io`; update the allowlist only if your published origin changes.
 
-1. ZIP را استخراج کن.
-2. همه فایل‌ها، از جمله `index.html`, `limo-v2.js`, `admin.html`, فایل‌های manifest/service worker و راهنماها را مستقیماً در ریشه مخزن قرار بده.
-3. فایل‌ها را در پوشه فرعی قرار نده.
-4. commit کن.
-5. در GitHub → Settings → Pages، انتشار از شاخه `main` و مسیر `/ (root)` را انتخاب کن.
-6. پس از انتشار، URL سایت را با HTTPS باز کن.
+If the Edge Function is not deployed, the app falls back to the authenticated SQL RPC. Device names and timestamps work, but IP displays as unavailable.
 
-Service Worker نسخه ۲.۰۱ نام cache جدید دارد. اگر نسخه قدیمی دیده شد، یک بار صفحه را hard refresh کن یا داده سایت را در مرورگر پاک کن و دوباره باز کن.
+## Security semantics / limitations
 
-## ۴. تنظیمات Auth و مدیر
+The session list is an app-managed device registry. Revoking a row sends a Realtime event to other open app clients, which then call local sign-out. This does not revoke that device's Supabase Auth refresh token at the Auth server, and cannot force a fully offline browser to sign out until it reconnects. Do not describe it as complete Auth token revocation. Individual Auth token revocation requires a separately designed trusted backend and verified Supabase Auth session-management API.
 
-پیکربندی Auth نسخه قبلی را حفظ کن: ورود با Email/Password فعال باشد و اگر از ایمیل داخلی `username@limochat.app` استفاده می‌کنی، Confirm email باید مطابق روش ثبت‌نام پروژه تنظیم شده باشد. Site URL و Redirect URL مجاز را به URL دقیق GitHub Pages محدود کن.
+## Verification
 
-برای اطمینان از نقش مدیر، در صورت نیاز دستور قبلی مدیر را دوباره بررسی کن:
+Run these checks after migration:
 
 ```sql
-select p.username, a.user_id
-from public.limo_admins a
-join public.profiles p on p.id=a.user_id;
+select version, applied_at from public.limo_schema_migrations order by applied_at;
+select id, device_label, ip_address, created_at, last_seen_at, revoked_at
+from public.limo_device_sessions where user_id = auth.uid();
 ```
 
-برای اعطای Premium به کاربر، فقط از پنل مدیر امن یا تابع ادمین مجاز استفاده کن. وضعیت `is_premium` را به کاربران عادی قابل ویرایش نکن.
+The second query is intended to run in an authenticated SQL context or through the app; SQL Editor usually runs as a privileged role and `auth.uid()` may be null.
 
-## ۵. آزمایش تنظیمات
 
-با یک حساب آزمایشی وارد شو و موارد زیر را جداگانه اجرا کن:
+## 2.04 device sessions
+1. Back up the existing Supabase project.
+2. Run `limochat-v2.04-migration.sql` only after migrations 2.0 through 2.03 have already been applied.
+3. For IP recording, deploy `limo-session-manager.ts` as `supabase/functions/limo-session-manager/index.ts` using the Supabase CLI. Configure Edge Function secrets `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` in the Supabase dashboard/CLI. The service-role key must never be copied into GitHub files.
+4. Restrict the Edge Function CORS `Access-Control-Allow-Origin` to `https://xdevelopre.github.io` (and your own preview origin, if needed) before production.
+5. Confirm the `limo_device_sessions` table is enabled in the `supabase_realtime` publication. The migration attempts to add it; verify in Dashboard → Database → Publications.
+6. Publish all root files to the GitHub Pages root. Keep `index.html`, `limo-v2.js`, `logo.svg`, `favicon.svg`, `manifest.json`, and `sw.js` together at the same level.
+7. Open the app over HTTPS, sign in on two devices, inspect Settings → Sessions, and revoke one device. Test that its open app tab signs out.
 
-1. حساب کاربری: تغییر نام نمایشی و بیوگرافی و ذخیره مجدد.
-2. حریم خصوصی: ناشناس‌سازی، رسید خوانده‌شدن و وضعیت آنلاین؛ صفحه را refresh کن و ماندگاری تنظیمات را بررسی کن.
-3. ظاهر: سه پوسته و چند رنگ را تغییر بده و پس از ورود مجدد بررسی کن.
-4. اعلان: اجازه مرورگر را صادر کن و اعلان آزمایشی را امتحان کن.
-5. مخاطبان: جستجوی آیدی، اشتراک لینک دعوت و تازه‌سازی گفتگوها.
-6. مسدودسازی: کاربر آزمایشی را مسدود و سپس رفع مسدودی کن.
-7. داده‌ها: برآورد Storage مرورگر و بازنشانی صرفاً داده‌های محلی را آزمایش کن.
-8. بررسی اتصال: وضعیت پروفایل، تنظیمات کاربر، گفتگوی عمومی، World و Space را ببین.
-
-## ۶. آزمایش رسانه Premium
-
-با یک حساب Free و یک حساب Premium جداگانه:
-
-- از حساب Free آپلود عکس، ویس و فیلم را امتحان کن؛ باید در رابط یا Storage/Database رد شود.
-- از حساب Premium عکس، ویس و فیلم کوتاه ارسال کن.
-- در خصوصی، گفتگوی عمومی و اتاق عمومی World نمایش رسانه را بررسی کن.
-- حجم و MIME نادرست را امتحان کن؛ نباید به عنوان پیام سالم ثبت شود.
-
-اگر upload در Storage موفق شد ولی insert پیام رد شد، برنامه فایل تازه‌بارگذاری‌شده را حذف می‌کند؛ با این حال پس از تست، Storage را برای فایل‌های orphan بررسی کن.
-
-## ۷. انتخاب عمر پیام
-
-در چت خصوصی و عمومی، دکمه ارسال را حدود نیم ثانیه نگه دار؛ گزینه‌های ماندگار، ۵/۳۰ دقیقه، ۱/۶/۱۲/۲۴ ساعت، ۳/۷/۳۰ روز ظاهر می‌شوند. همین رفتار در composer اتاق‌های World هم فعال است. کلیک معمولی روی دکمه همچنان پیام را ارسال می‌کند.
-
-## ۸. درخواست Premium در تلگرام
-
-در تنظیمات → اشتراک Limo Premium، دکمه درخواست خرید به `@premiume` باز می‌شود و یک متن شامل آیدی لیموچت، نام نمایشی و شناسه حساب را به عنوان draft آماده می‌کند. کاربر باید ارسال را در تلگرام خودش تأیید کند. هیچ پرداخت یا ارسال خودکاری انجام نمی‌شود.
-
-## ۹. محدودیت‌های عملیاتی
-
-- این SQL در دیتابیس زنده اجرا نشده است؛ اجرای موفق را در SQL Editor خودت بررسی کن.
-- `pg_cron` برای پاک‌سازی زمان‌دار باید در پروژه در دسترس باشد. در صورت عدم دسترسی، پیام‌های منقضی‌شده ممکن است تا اجرای پاک‌سازی بعدی در دیتابیس بمانند، هرچند RLS آن‌ها را از خواندن عادی پنهان می‌کند.
-- تماس گروهی، E2EE، AI مولد، Push پس‌زمینه و Mesh واقعی جزو امکانات فعال نسخه ۲.۰۱ نیستند.
+IP may remain unavailable when the hosting/proxy does not forward a trusted IP header. The session list is an app-level registry, not complete Supabase Auth session revocation.

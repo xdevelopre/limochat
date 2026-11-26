@@ -1,46 +1,11 @@
-# وضعیت قابلیت‌های Limo Chat 2.01
+# Features — Limo Chat 2.04.1
 
-## در کد نسخه ۲.۰۱ پیاده‌سازی شده‌اند
+- Existing 2.03 chat, groups, channels, premium, admin and PWA code is retained as the base.
+- Feature module loader: one shared import promise, URL resolved against `document.baseURI`, API verification and diagnostic errors. The app must be served over HTTPS (GitHub Pages), not opened as `file://`.
+- Brand: flat lime/white vector logo, favicon and PWA icons; no black image matte.
+- Settings → Sessions: lists app-registered devices, device/browser label, IP when server Edge Function is deployed, created time and last activity. Users can revoke an app session; open app tabs/devices are notified over Supabase Realtime and sign out locally.
+- Device IP collection is optional and requires deploying `limo-session-manager.ts` as the Supabase Edge Function `limo-session-manager`. Without it, IP is shown as unavailable.
 
-- تنظیم پروفایل شامل نام نمایشی، بیوگرافی و تصویر آماده.
-- تغییر نام کاربری و رمز عبور از طریق Supabase Auth/Profiles؛ عملکرد وابسته به پیکربندی Auth پروژه.
-- ذخیره‌سازی تنظیمات شخصی در `user_settings` و نگهداری محلی برای بازیابی سریع.
-- تنظیم حریم خصوصی: ناشناس‌سازی نام پیام‌های جدید، رسید خوانده‌شدن و نمایش وضعیت آنلاین رابط.
-- تغییر تم Aero/روشن/تیره و رنگ اصلی.
-- درخواست مجوز Notification، اعلان آزمایشی قابل مشاهده و دریافت اعلان پیام ورودی از جدول‌های messages، global_messages و limo_room_messages هنگام مخفی‌شدن تب؛ اعلان پس از بسته‌شدن کامل مرورگر (Push) فعال نیست و وابسته به Realtime و مجوز مرورگر است.
-- دعوت با Web Share API یا کپی لینک، جستجوی کاربر با نام کاربری، فهرست گفتگوها و مدیریت کاربران مسدودشده.
-- برآورد مصرف سهمیه Storage مرورگر و پاک‌سازی داده محلی منتخب.
-- صفحه عیب‌یابی که نشست، پروفایل، user_settings، global_messages، limo_public_rooms، limo_spaces، Service Worker و Notification API را می‌سنجد.
-- لینک Limo ID با قالب `?user=username` پس از ورود، گفتگوی خصوصی با صاحب آیدی را باز می‌کند.
-- در حریم خصوصی، گزینه‌های غیرعملیاتی آنلاین حذف شده‌اند؛ فقط تنظیمات واقعی ناشناس‌سازی و رسید خوانده‌شدن نمایش داده می‌شوند.
-- انتخاب ماندگاری در چت خصوصی/عمومی و اتاق‌های World با نگه‌داشتن دکمه ارسال؛ انتخاب گزینه از جدول زیبا.
-- نمایش نام، آیدی و آواتار فرستنده در پیام‌های گفتگوی عمومی و اتاق‌های World و شروع DM با لمس پروفایل. پیام‌های عمومی ناشناس، هویت را افشا نمی‌کنند.
-- آپلود عکس، فیلم و ویس فقط برای Premium: UI check + Storage RLS + Database trigger.
-- حداکثرهای برنامه: تصویر ۵MB، ویس ۵MB، فیلم ۴۰MB.
-- درخواست خرید Premium به `@premiume` با متن پیش‌نویس آماده. ارسال دستی در تلگرام و اعطای دستی Premium توسط مدیر انجام می‌شود.
-
-## قابلیت‌های نسخه ۲.۰ که همچنان در دسترس‌اند
-
-- Limo World: فهرست و جستجوی اتاق‌ها، ایجاد گروه/کانال، عضویت، پیام‌رسانی، واکنش و نظرسنجی.
-- Limo Space: ایجاد فضا، پیوستن با کد دعوت، وظایف و یادداشت‌ها.
-- Limo AI: خلاصه‌سازی استخراجی و قاعده‌محور، یافتن وظایف احتمالی، لینک‌ها و جستجوی محلی در پیام‌ها.
-- Limo Mini: تاس، ماشین‌حساب محدود به عملگرهای مشخص بدون `eval`، شمارش متن و انتخاب‌گر.
-- پیام صوتی در چت خصوصی/عمومی و World؛ وابسته به دسترسی میکروفون و MediaRecorder مرورگر.
-- پیام زمان‌دار؛ اجرای خودکار در زمان بسته بودن برنامه به `pg_cron` یا سرویس زمان‌بندی سروری نیاز دارد.
-- صف محلی پیام متنی در حالت قطع اینترنت و ارسال مجدد پس از آنلاین شدن.
-- PWA و کش پوسته برنامه.
-
-## مواردی که کامل/فعال نیستند و نباید تبلیغ شوند
-
-- E2EE واقعی و راستی‌آزمایی کلید دستگاه‌ها.
-- AI مولد متصل به مدل زبانی، ترجمه خودکار و رونویسی خودکار ویس.
-- تماس گروهی صوتی/تصویری و اشتراک صفحه؛ تماس یک‌به‌یک قبلی نیز به تست جداگانه نیاز دارد.
-- ارسال Bluetooth/Wi-Fi Mesh بدون اینترنت.
-- Push notification واقعی پس از بسته‌شدن کامل مرورگر.
-- پرداخت خودکار اشتراک و تمدید Premium.
-- Marketplace مینی‌اپ‌های ثالث.
-- صفحه پروفایل عمومی مستقل و تأیید رسمی هویت؛ لینک Limo ID در حال حاضر پس از ورود، گفتگوی خصوصی با نام کاربری مقصد را باز می‌کند.
-
-## نیازمند تست واقعی پس از SQL و انتشار
-
-این محیط به پروژه Supabase کاربر متصل نیست. بنابراین اتصال Auth، RLS، Realtime، Storage، pg_cron، سیاست Premium و کارکرد UI باید با دو حساب واقعی (Free و Premium) پس از اجرای migration آزمایش شوند.
+## Explicit limitations
+- This is an app-level device registry, not a complete Supabase Auth session administration console. Revoking a row signs out the matching open app instance through Realtime; it does not revoke every Auth refresh token or block arbitrary direct API calls from a previously issued token.
+- Static tests do not prove the live Supabase schema, RLS, Realtime publication, Edge Function deployment, or browser runtime.

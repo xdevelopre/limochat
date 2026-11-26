@@ -1,74 +1,32 @@
-# Limo Chat 2.01 — GitHub Pages + Supabase
+# Limo Chat 2.04.1
 
-لیموچت ۲.۰۱ یک به‌روزرسانی روی پروژه Limo Chat 2.0 است. میزبانی رابط کاربری روی **GitHub Pages** و احراز هویت، دیتابیس، Realtime و Storage روی **Supabase** باقی می‌ماند. تمام فایل‌های انتشار در ریشه مخزن قرار می‌گیرند.
+GitHub Pages PWA backed by the existing Supabase Auth, PostgreSQL, Realtime and Storage project. This package is an additive update to the supplied 2.03 source. All files are at the ZIP root; the ZIP uses ZIP_STORED (no compression).
 
-> این بسته ادعای تکمیل قابلیت‌هایی مانند E2EE، هوش مصنوعی مولد، پرداخت خودکار، تماس گروهی یا Mesh بدون اینترنت را ندارد. جزئیات در `FEATURES.md` و `SECURITY.md` نوشته شده است.
+## Files
 
-## فایل‌های اصلی
+- `index.html`: application shell and Supabase client.
+- `limo-v2.js`: feature module.
+- `logo.svg`, `favicon.svg`, `icon-192.png`, `icon-512.png`: new clean lime/white brand assets (no black JPEG background).
+- `limochat-v2.04-migration.sql`: additive session-registry migration.
+- `limo-session-manager.ts`: optional Supabase Edge Function source for trusted client-IP capture.
 
-| فایل | کاربرد |
-|---|---|
-| `index.html` | برنامه اصلی، ورود/ثبت‌نام، پیام‌ها، تنظیمات و رابط کاربری |
-| `limo-v2.js` | Limo World، Space، AI محلی، Mini، Time Capsule، ویس، صف آفلاین و ابزار عیب‌یابی |
-| `admin.html` | پنل مدیر |
-| `limochat-v2.0.sql` | SQL پایه و نصب کامل نسخه ۲.۰؛ فقط برای نصب تازه یا مرجع |
-| `limochat-v2.01-migration.sql` | مهاجرت افزایشی نسخه ۲.۰۱ برای دیتابیس موجود نسخه ۲.۰ |
-| `manifest.json`, `sw.js` | نصب PWA و کش پوسته |
-| `icon-192.png`, `icon-512.png`, `favicon.svg` | آیکون‌ها |
-| فایل‌های `.md` | راهنمای نصب، وضعیت قابلیت‌ها، امنیت، تغییرات و گزارش تست |
+## Deploy
 
-## ارتقا از نسخه ۲.۰ به ۲.۰۱
+1. Back up Supabase database and Storage configuration.
+2. Confirm migrations 2.0, 2.01, 2.02 and 2.03 are already applied.
+3. Review and run `limochat-v2.04-migration.sql` in the existing Supabase project's SQL Editor.
+4. (Recommended for IP display) Deploy `limo-session-manager.ts` as the Edge Function `limo-session-manager`; see `SETUP-SUPABASE.md`. Never put the service-role key in frontend files.
+5. Publish every ZIP-root file to the root of the GitHub Pages repository. Keep the exact filename `limo-v2.js` (case-sensitive).
+6. Clear the site's old service worker/cache once by reloading after deployment; the worker cache was version-bumped to 2.04.
 
-چون دیتابیس فعلی قبلاً با SQL نسخه ۲.۰ نصب شده است:
+## Module loader fix
 
-1. از Supabase یک پشتیبان بگیر.
-2. **فقط** فایل `limochat-v2.01-migration.sql` را یک بار در SQL Editor اجرا کن.
-3. فایل‌های ZIP را استخراج کن و تمام فایل‌ها را مستقیماً در ریشه مخزن GitHub جایگزین کن.
-4. در GitHub Pages شاخه `main` و پوشه `/ (root)` را انتخاب کن.
-5. پس از انتشار، سایت را با HTTPS باز کن و یک‌بار صفحه را با پاک‌سازی کش یا نسخه جدید Service Worker بارگذاری کن.
+The main page now creates one shared `window.LimoV2Ready` promise after the Supabase bridge is initialized. Settings pages await the same import, use a URL relative to `index.html`, and show the precise import error and resolved module URL if loading fails. Confirm that `https://<owner>.github.io/<repo>/limo-v2.js` returns JavaScript with HTTP 200.
 
-**SQL نسخه ۲.۰ را دوباره اجرا نکن.** این کار برای ارتقای دیتابیس موجود لازم نیست و می‌تواند سیاست‌ها/داده‌ها را تحت تأثیر قرار دهد. اگر نصب کاملاً تازه‌ای داری، ابتدا `limochat-v2.0.sql` و سپس `limochat-v2.01-migration.sql` را اجرا کن.
+## Device sessions
 
-## تغییرات نسخه ۲.۰۱
+The app stores a per-tab device-session registry row. The UI lists browser/OS label, IP when the Edge Function is deployed, created/last-seen timestamps, and app-level revoke status. A remote open app tab receives a Realtime revoke event and signs out locally. This is app-level session termination, not guaranteed immediate revocation of the Supabase Auth refresh token at the Auth server. The public Supabase JS API does not expose a safe per-device admin token-revocation operation. For strict token revocation, a separately reviewed server-side Auth session-management service is required.
 
-- پنل تنظیمات عیب‌یابی اتصال، نشست، پروفایل، تنظیمات ذخیره‌شده و دسترسی جداول اصلی را از Supabase بررسی می‌کند.
-- ذخیره تغییرات حریم خصوصی و اعلان‌ها خطاها را گزارش می‌دهد و در صورت شکست ذخیره‌سازی، وضعیت کنترل را بازمی‌گرداند.
-- اعلان پیام ورودی برای پیام‌های خصوصی، گفتگوی عمومی و اتاق‌های World هنگام مخفی‌شدن تب فعال است؛ به مجوز مرورگر و اتصال Realtime نیاز دارد و پس از بسته‌شدن کامل برنامه Push نیست.
-- لینک Limo ID به‌صورت `?user=username` پس از ورود، گفتگوی خصوصی با کاربر مقصد را باز می‌کند.
-- گزینه نمایشی وضعیت آنلاین حذف شده تا تنظیمی که در این نسخه اثر واقعی ندارد نمایش داده نشود.
-- انتخاب ماندگاری پیام در چت خصوصی/عمومی با نگه‌داشتن دکمه ارسال باز می‌شود؛ در Limo World نیز همین الگو استفاده می‌شود.
-- زمان‌های ماندگاری: دائمی، ۵ دقیقه، ۳۰ دقیقه، ۱ ساعت، ۶ ساعت، ۱۲ ساعت، ۲۴ ساعت، ۳ روز، ۷ روز و ۳۰ روز.
-- در گفتگوی عمومی و اتاق‌های Limo World، نام و نمایه فرستنده قابل لمس است و بازکردن گفتگوی خصوصی با او را آغاز می‌کند؛ پیام‌های ناشناس، ناشناس باقی می‌مانند.
-- ارسال عکس، ویدئو و پیام صوتی به Premium محدود شده و در رابط، سیاست Storage و تریگر دیتابیس کنترل می‌شود.
-- ویدئو تا ۴۰ مگابایت، عکس تا ۵ مگابایت و پیام صوتی تا ۵ مگابایت در کد برنامه محدود شده‌اند.
-- بخش Premium درخواست آماده خرید را به گفتگوی تلگرام `@premiume` باز می‌کند. ارسال نهایی را خود کاربر در تلگرام تأیید می‌کند؛ پرداخت خودکار پیاده‌سازی نشده است.
-- سیاست دیتابیس بررسی تعلیق حساب را حفظ می‌کند و تغییرات متن یک پیام دارای رسانه را در صورت عدم تغییر فایل، بی‌دلیل به اشتراک Premium وابسته نمی‌کند.
+## Test status
 
-## Storage
-
-Bucket به نام `chat-media` باید **Private** بماند. فایل SQL مهاجرت سقف bucket را روی ۴۰ مگابایت تنظیم می‌کند. در تنظیمات Storage پروژه، Global file size limit را حداقل ۴۰ مگابایت قرار بده. سقف پلن Free در مستندات Supabase حداکثر ۵۰ مگابایت است؛ بنابراین ویدئوی ۴۰ مگابایتی نیازمند تنظیم global مناسب است.
-
-فرمت‌های مجاز در مهاجرت SQL تعریف شده‌اند. تغییر این تنظیمات در داشبورد بدون اجرای موفق SQL مهاجرت، برای برنامه کافی نیست.
-
-## درخواست خرید Premium
-
-در تنظیمات برنامه، دکمه «ارسال درخواست به @premiume» لینک تلگرام با متن ازپیش‌نوشته‌شده باز می‌کند. تلگرام متن را به‌عنوان پیش‌نویس نشان می‌دهد؛ **پیام به‌صورت خودکار ارسال نمی‌شود**. پس از توافق و بررسی پرداخت، مدیر باید وضعیت Premium کاربر را از پنل مدیریت یا تابع مجاز دیتابیس فعال کند.
-
-## تنظیمات و عیب‌یابی
-
-از بخش تنظیمات، گزینه «بررسی اتصال و عیب‌یابی» را باز کن. این صفحه اتصال مرورگر، نشست، پروفایل، جدول تنظیمات کاربر، جدول پیام عمومی، فهرست اتاق‌های World، فضاهای همکاری و Service Worker را می‌سنجد. نتیجه موفق این آزمایش‌ها به معنای ممیزی کامل امنیتی یا تست بار نیست.
-
-## امنیت و محدودیت‌ها
-
-- کلید `service_role` را هرگز در `index.html`، `limo-v2.js` یا GitHub قرار نده.
-- پیام‌رسان هنوز E2EE واقعی ندارد؛ محتوای پیام در Supabase رمزنگاری سرتاسری نشده است.
-- Premium بودن برای آپلود رسانه در دیتابیس و Storage کنترل می‌شود، نه فقط با مخفی‌کردن دکمه.
-- ارسال رسانه فقط با حساب Premium و ورود معتبر در نظر گرفته شده است. برای بررسی نهایی، تست با حساب Free و Premium جداگانه انجام بده.
-- لینک تلگرام تنها پیش‌نویس درخواست را باز می‌کند؛ انتقال پول یا اعطای خودکار اشتراک وجود ندارد.
-- تماس گروهی، AI مولد، Push در حالت بسته بودن مرورگر و Bluetooth/Wi-Fi Mesh نیازمند سرویس‌های اضافی‌اند و در این نسخه کامل نیستند.
-
-## تست انتشار
-
-بعد از اجرای SQL و انتشار فایل‌ها، با دو حساب مجزا این موارد را بررسی کن: ورود/خروج، تنظیم نام و بیو، تم و رنگ، اعلان، تنظیمات ذخیره‌شده، جستجوی آیدی، مسدودسازی، چت خصوصی/عمومی، پیام دائمی و منقضی‌شونده، نمایه فرستنده در World، بازشدن DM، آپلود عکس/ویس/ویدئو با Premium، ردشدن آپلود رسانه از حساب Free، و بازشدن متن درخواست خرید در تلگرام.
-
-گزارش ایستای این بسته در `TEST-REPORT.md` آمده است. اتصال به پروژه زنده Supabase و تست نهایی از این محیط انجام نشده است.
+Static syntax, markup, asset, SQL-shape and package checks are documented in `TEST-REPORT.md`. No SQL was executed against the live Supabase project and no GitHub deployment was performed. Realtime and Edge Function behavior require deployment and two real signed-in devices to verify.

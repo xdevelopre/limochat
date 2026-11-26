@@ -1,0 +1,27 @@
+Limo Chat 2.04 static checks: 26 passed, 0 failed
+PASS index.html: unique IDs
+PASS index.html: local references exist
+PASS index.html: inline module 1 syntax
+PASS admin.html: unique IDs
+PASS admin.html: local references exist
+PASS admin.html: inline module 1 syntax
+PASS limo-v2.js syntax
+PASS manifest parses
+PASS module loader uses document-relative absolute URL
+PASS module loader checks exposed API
+PASS module bridge initialized before import
+PASS feature module requires bridge
+PASS sessions setting visible
+PASS sessions realtime filter is per-user
+PASS session heartbeat called
+PASS session RPC exists
+PASS session RLS enabled
+PASS revoked session cannot be resurrected
+PASS session writes use owner checked RPC
+PASS IP only comes from edge headers
+PASS Edge CORS is origin-restricted
+PASS Edge function validates JWT
+PASS logo uses vector asset
+PASS no legacy logo reference
+PASS logo SVG has no black background
+PASS migration is additive

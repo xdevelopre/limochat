@@ -1,44 +1,8 @@
-# امنیت و حریم خصوصی Limo Chat 2.01
+# Security notes — Limo Chat 2.04
 
-## اطلاعات محرمانه
-- فقط Supabase publishable/anon key باید در مرورگر استفاده شود.
-- کلید `service_role`، رمز دیتابیس، کلیدهای API و Secretها هرگز نباید در GitHub Pages منتشر شوند.
-- Bucket `chat-media` باید Private باشد.
-
-## Premium media
-- رابط کاربری وضعیت Premium را از `profiles.is_premium` می‌خواند.
-- Storage INSERT policy مالکیت فایل، مسیر گفتگو/اتاق، عضویت و وضعیت Premium را بررسی می‌کند. Storage SELECT policy نیز مسیرهای UUID خصوصی/اتاق و پوشه عمومی `global` را با بررسی امن مسیر مجاز می‌کند.
-- Database trigger درج/تغییر media path را برای Premium یا مدیر مجاز می‌کند؛ حساب تعلیق‌شده اجازه ارسال ندارد.
-- فایل مهاجرت، bucket را روی ۴۰MB تنظیم و MIMEهای عکس، صدا و ویدئو را محدود می‌کند.
-- حدود کد برنامه: تصویر ۵MB، صوت ۵MB، ویدئو ۴۰MB. تنظیم global Supabase Storage نیز باید حداقل ۴۰MB باشد.
-
-## اعلان‌ها
-- اعلان ورودی با Supabase Realtime روی جدول‌های پیام پیگیری می‌شود؛ فقط زمانی نمایش داده می‌شود که تب مرورگر مخفی، مجوز Notification صادرشده و تنظیم اعلان روشن باشد.
-- با بسته‌شدن کامل مرورگر، دریافت اعلان تضمین نیست؛ برای آن باید Push subscription و سرویس ارسال سمت سرور راه‌اندازی شود.
-
-## پیام‌های عمومی و پروفایل فرستنده
-- در پیام عمومی/World، آواتار و نام پروفایل از `profiles` بازیابی می‌شود.
-- کلیک بر پروفایل، RPC ساخت گفتگوی خصوصی موجود را فراخوانی می‌کند.
-- پیام‌هایی که با نام «کاربر ناشناس» ثبت شده‌اند، در رابط عمومی شناسه حساب را به مخاطب نشان نمی‌دهند.
-- خواندن پروفایل برای کاربران واردشده به سیاست RLS پروفایل وابسته است.
-
-## پیام‌های موقت
-- `expires_at` در دیتابیس از مقدار انتخابی کاربر پیروی می‌کند؛ SQL نباید آن را به مقدار ثابت بازنویسی کند.
-- RLS پیام‌های منقضی‌شده را از خواندن عادی پنهان می‌کند.
-- پاک‌سازی فیزیکی به job دیتابیس/pg_cron وابسته است.
-- پیام موقت مانع screenshot، کپی‌کردن یا ضبط با دستگاه دیگر نیست.
-
-## محدودیت‌های مهم
-- نسخه ۲.۰۱ هنوز رمزنگاری سرتاسری واقعی ندارد. پیام‌ها در Supabase ذخیره می‌شوند و نباید به‌عنوان E2EE معرفی شوند.
-- پردازش AI مولد ابری نصب نشده است؛ ابزارهای فعلی در مرورگر و محلی/قاعده‌محور هستند.
-- لینک تلگرام Premium پیش‌نویس پیام را باز می‌کند؛ ارسال، پرداخت و اعطای اشتراک خودکار نیست.
-- تست ایستا جای ممیزی امنیتی، تست نفوذ یا تأیید واقعی RLS را نمی‌گیرد.
-
-## چک‌لیست پیش از انتشار عمومی
-1. SQL migration فقط یک‌بار و پس از Backup اجرا شود.
-2. `chat-media` Private بماند و Global file size limit با سقف آپلود هماهنگ باشد.
-3. دو حساب جداگانه Free و Premium برای تست استفاده شوند.
-4. آپلود عکس/ویس/ویدئو با Free رد و با Premium پذیرفته شود.
-5. مسیرهای فایل در چت خصوصی و اتاق World با عضویت کاربر کنترل شوند.
-6. هیچ کلید service_role در فایل‌های عمومی نباشد.
-7. E2EE یا هر قابلیت امنیتی پیاده‌نشده در تبلیغات محصول ادعا نشود.
+- No Supabase service-role key is embedded in frontend files. `SUPABASE_SERVICE_ROLE_KEY` is read only from Supabase Edge Function secrets.
+- The Edge Function validates the caller JWT with `auth.getUser()` before registering a device session. It derives IP from platform forwarding headers and ignores any client-supplied IP field.
+- The session table has RLS enabled; authenticated users can read only rows where `user_id = auth.uid()`. Inserts and updates are exposed through owner-checked SECURITY DEFINER RPCs.
+- Realtime is used to notify open app instances that their app session was revoked. This is not equivalent to revoking the Supabase Auth refresh token. A user with a still-valid token may continue making direct API requests until that token expires or is revoked by a separate Auth administration mechanism.
+- IP addresses are sensitive personal data. Disclose collection in the privacy notice, restrict access, define a retention period, and comply with applicable law. Do not use wildcard CORS in production without restricting allowed origins to the published app.
+- Keep database backups before applying the additive migration.

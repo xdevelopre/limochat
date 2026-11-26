@@ -1,10 +1,11 @@
-const CACHE_NAME = 'limo-chat-v2.01-shell';
+const CACHE_NAME = 'limo-chat-v2.04.1-shell';
 const APP_SHELL = [
   './',
   './index.html',
   './limo-v2.js',
   './manifest.json',
   './favicon.svg',
+  './logo.svg',
   './icon-192.png',
   './icon-512.png'
 ];

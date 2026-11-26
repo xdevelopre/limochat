@@ -1,19 +1,14 @@
-# Changelog — Limo Chat 2.01
+# Changelog — Limo Chat 2.04.1
 
-## 2.01.0
-- اصلاح و تکمیل صفحات تنظیمات موجود و اضافه‌شدن صفحه بررسی اتصال/عیب‌یابی متصل به داده‌های واقعی Supabase.
-- بهبود ذخیره تنظیمات: گزارش خطای واقعی و بازگرداندن کنترل به مقدار قبلی در صورت شکست ذخیره‌سازی.
-- اصلاح اعلان آزمایشی و افزودن اشتراک Realtime برای پیام‌های ورودی در چت خصوصی، عمومی و اتاق‌های World هنگام مخفی‌بودن تب.
-- حذف گزینه نمایشی وضعیت آنلاین از حریم خصوصی؛ این قابلیت تا زمان پیاده‌سازی حضور زنده به‌عنوان تنظیم قابل تغییر نمایش داده نمی‌شود.
-- لینک Limo ID با `?user=username` پس از ورود به حساب، چت خصوصی با کاربر مقصد را باز می‌کند.
-- اصلاح Storage read policy برای مسیرهای UUID و پوشه `global` تا خواندن رسانه عمومی به cast نامعتبر UUID وابسته نباشد.
-- انتخاب عمر پیام در چت خصوصی/عمومی با نگه‌داشتن دکمه ارسال؛ طراحی شبکه‌ای و انتخاب‌گر یکسان در اتاق‌های Limo World.
-- نمایش نمایه فرستنده در پیام‌های گفتگوی عمومی و World؛ کلیک روی نام/تصویر برای شروع گفتگوی خصوصی.
-- محدودسازی ارسال عکس، ویدئو و ویس به Premium در UI، Storage RLS و trigger دیتابیس.
-- دکمه درخواست خرید Premium برای بازکردن گفتگوی تلگرام `@premiume` با متن آماده؛ ارسال نهایی دستی است.
-- اصلاح trigger رسانه برای احترام به `expires_at` انتخاب‌شده، بررسی حساب تعلیق‌شده و اجازه ویرایش متن پیام رسانه‌ای بدون نیاز به تمدید مجدد Premium در صورتی که فایل رسانه تغییر نکرده باشد.
-- افزایش سقف آپلود ویدئو به ۴۰MB با الزام تنظیم Global Storage Limit.
-- cache نام Service Worker و metadata برنامه به نسخه ۲.۰۱ ارتقا یافت.
+## 2.04 — Module loader and device sessions
+- Reworked the `limo-v2.js` loader to resolve from the published page URL, share one in-flight import promise, verify `window.LimoV2`, and show actionable retry diagnostics.
+- Replaced the previous logo artwork with a clean, flat lime-and-white SVG mark without a black matte or border. Updated favicon and PWA icons.
+- Added a device-session list in Settings with browser/OS label, first registration, last activity, IP (when the Edge Function is deployed), and app-level session revocation.
+- Corrected Realtime subscription filtering so all signed-in devices for the same user receive revocation updates.
+- Added device-session heartbeat and an additive Supabase migration.
+- Added a Supabase Edge Function source that records the request IP from trusted platform headers; it never accepts an IP supplied in the JSON body.
 
-## 2.0.0
-- Limo World، Limo Space، ابزارهای AI محلی، Limo Mini، پیام صوتی، Time Capsule، صف پیام آفلاین، فیلتر صندوق ورودی و ساختار اولیه Freemium.
+
+## 2.04.2
+- Replaced unsupported bottom-navigation Apps icon with Font Awesome Free `fa-table-cells-large`.
+- Improved database schema error reporting to show the actual PostgREST/PostgreSQL code and server message rather than a generic notice.

@@ -1,4 +1,4 @@
-/* Limo Chat 2.01 feature module.
+/* Limo Chat 2.02 feature module.
  * This file runs in the browser and uses only the authenticated Supabase client.
  * No service-role keys, private server secrets, eval(), or external AI API calls.
  */
@@ -23,14 +23,30 @@
   let mainRecorder = null;
   let mainRecordingStream = null;
   let roomMessageCache = [];
+  let roomMessageCursor = null;
+  let roomMessageHasMore = false;
+  let roomLoadingOlder = false;
   let roomPollRefreshTimer = null;
   let roomExpiryHoldTimer = null;
   let roomExpiryHoldOpened = false;
   let skipRoomExpiryClick = false;
   let premiumStatusCache = null;
-  const roomExpiryOptions = [{value:0,label:'ماندگار',icon:'fa-infinity'},{value:300,label:'۵ دقیقه',icon:'fa-hourglass-start'},{value:1800,label:'۳۰ دقیقه',icon:'fa-clock'},{value:3600,label:'۱ ساعت',icon:'fa-clock'},{value:21600,label:'۶ ساعت',icon:'fa-clock'},{value:43200,label:'۱۲ ساعت',icon:'fa-clock'},{value:86400,label:'۲۴ ساعت',icon:'fa-calendar-day'},{value:259200,label:'۳ روز',icon:'fa-calendar'},{value:604800,label:'۷ روز',icon:'fa-calendar-week'},{value:2592000,label:'۳۰ روز',icon:'fa-calendar-check'}];
+  const roomExpiryOptions = [{value:0,label:'ماندگار',icon:'fa-infinity'},{value:5,label:'۵ ثانیه',icon:'fa-hourglass-start'},{value:10,label:'۱۰ ثانیه',icon:'fa-hourglass-start'},{value:30,label:'۳۰ ثانیه',icon:'fa-clock'},{value:60,label:'۱ دقیقه',icon:'fa-clock'},{value:300,label:'۵ دقیقه',icon:'fa-clock'},{value:3600,label:'۱ ساعت',icon:'fa-clock'},{value:86400,label:'۱ روز',icon:'fa-calendar-day'},{value:604800,label:'۷ روز',icon:'fa-calendar-week'},{value:2592000,label:'۳۰ روز',icon:'fa-calendar-check'}];
   const publicProfileCache = new Map();
   const offlineKey = () => `limo_v2_outbox_${user()?.uid || 'guest'}`;
+
+  function signedMediaLifetimeSeconds(expiresAt) {
+    if (!expiresAt) return 60;
+    const remaining = Date.parse(expiresAt) - Date.now();
+    if (!Number.isFinite(remaining) || remaining <= 2500) return 0;
+    return Math.max(1, Math.min(60, Math.floor(remaining / 1000) - 2));
+  }
+  async function setSignedMediaSource(element, path, expiresAt) {
+    const lifetime = signedMediaLifetimeSeconds(expiresAt);
+    if (!lifetime) return;
+    const {data,error} = await db.storage.from('chat-media').createSignedUrl(path,lifetime);
+    if (!error && data?.signedUrl && (!expiresAt || Date.parse(expiresAt) > Date.now())) element.src=data.signedUrl;
+  }
 
   function setBody(html) {
     const body = $('submenu-body');
@@ -50,9 +66,9 @@
   async function isPremium(force = false) {
     if (!force && premiumStatusCache !== null) return premiumStatusCache;
     if (!user()?.uid) return false;
-    const { data, error } = await db.from('profiles').select('is_premium').eq('id', user().uid).single();
+    const { data, error } = await db.from('profiles').select('is_premium,premium_expires_at').eq('id', user().uid).single();
     if (error) throw error;
-    premiumStatusCache = !!data?.is_premium;
+    premiumStatusCache = !!data?.is_premium && (!data?.premium_expires_at || Date.parse(data.premium_expires_at) > Date.now());
     return premiumStatusCache;
   }
   async function requirePremium(featureName = 'این قابلیت') {
@@ -69,15 +85,40 @@
   async function openUser(uid) {
     if (!uid) return;
     if (uid === user()?.uid) { core.openSubMenu?.('account'); return; }
-    let profile = publicProfileCache.get(uid);
-    if (!profile) {
-      const { data, error } = await db.from('profiles').select('id,username,display_name,avatar_url,bio').eq('id', uid).maybeSingle();
-      if (error || !data) return toast('پروفایل این کاربر در دسترس نیست.');
-      profile = data; publicProfileCache.set(uid, profile);
+    // Always re-check with RLS. A cached profile must not survive a privacy change.
+    const { data: profile, error } = await db.from('profiles')
+      .select('id,username,display_name,avatar_url,bio,public_profile')
+      .eq('id', uid).maybeSingle();
+    if (error || !profile) return toast('این پروفایل خصوصی است یا در دسترس نیست.');
+    featureHeader('پروفایل عمومی');
+    const body = $('submenu-body');
+    if (!body) return;
+    body.replaceChildren();
+    const card = document.createElement('div'); card.className = 'limo-v2-card'; card.style.textAlign = 'center';
+    const avatarWrap = document.createElement('div'); avatarWrap.style.cssText = 'display:flex;justify-content:center;margin:8px';
+    const avatar = document.createElement('div'); avatar.className = 'avatar'; avatar.style.cssText = 'width:72px;height:72px;margin:auto;font-size:24px';
+    if (profile.avatar_url && /^https:\/\//i.test(profile.avatar_url)) {
+      const image = document.createElement('img'); image.src = profile.avatar_url; image.alt = ''; image.referrerPolicy = 'no-referrer'; avatar.append(image);
+    } else {
+      avatar.textContent = (profile.display_name || profile.username || 'ل').slice(0,1);
     }
-    if (typeof window.startPrivateChat === 'function') {
-      window.startPrivateChat(profile.id, profile.display_name || profile.username || 'کاربر', profile.avatar_url || null);
-    } else toast('امکان ساخت گفتگوی خصوصی در این لحظه در دسترس نیست.');
+    avatarWrap.append(avatar);
+    const name = document.createElement('h2'); name.textContent = profile.display_name || profile.username || 'کاربر لیمو';
+    const handle = document.createElement('p'); handle.className = 'limo-v2-muted'; handle.dir = 'ltr'; handle.textContent = '@' + (profile.username || 'user');
+    const bio = document.createElement('p'); bio.textContent = profile.bio || 'بدون بیوگرافی';
+    const action = document.createElement('button'); action.type = 'button'; action.className = 'limo-v2-btn'; action.style.width = '100%';
+    const icon = document.createElement('i'); icon.className = 'fa-solid fa-message'; action.append(icon, document.createTextNode(' شروع گفتگوی خصوصی'));
+    action.addEventListener('click', () => startPrivateChat(profile.id, profile.display_name || profile.username || 'کاربر', profile.avatar_url || ''));
+    card.append(avatarWrap, name, handle, bio, action);
+    const note = document.createElement('div'); note.className = 'limo-v2-note';
+    note.textContent = 'فقط اطلاعات عمومی این کاربر نمایش داده می‌شود؛ اطلاعات خصوصی حساب در دسترس نیست.';
+    body.append(card, note);
+  }
+  async function startPrivateChat(uid,name,avatar){
+    if (!uid) return;
+    if (!navigator.onLine) return toast('برای ساخت گفتگوی خصوصی باید آنلاین باشی.');
+    if (typeof window.startPrivateChat === 'function') return window.startPrivateChat(uid,name,avatar||null);
+    return toast('امکان ساخت گفتگوی خصوصی در دسترس نیست.');
   }
 
   function timeLocal(value) {
@@ -173,6 +214,7 @@
     if(membershipError || !membership) return toast('عضویت اتاق تأیید نشد؛ دوباره تلاش کن.');
     activeRoomRole=membership.role||'member';
     activeRoom = room;
+    roomMessageCache = []; roomMessageCursor = null; roomMessageHasMore = false; roomLoadingOlder = false;
     if(roomChannel) { await db.removeChannel(roomChannel).catch(()=>{}); roomChannel=null; }
     featureHeader(room.name);
     const mayPost=room.room_kind!=='channel'||['owner','moderator'].includes(activeRoomRole);
@@ -182,8 +224,8 @@
         <h3>${esc(room.name)}</h3><p class="limo-v2-muted">${esc(room.topic||'اتاق عمومی لیموچت')} · ${esc(room.category||'عمومی')}</p>
         ${room.room_kind==='voice' ? '<div class="limo-v2-note">این اتاق در نسخه فعلی لابی متنی است. تماس صوتی چندنفره برای انتشار عمومی به SFU و سرویس TURN پایدار نیاز دارد.</div>' : ''}
       </div>
-      <div id="room-polls"></div><div id="room-messages" class="limo-v2-card" style="min-height:180px;max-height:45vh;overflow:auto"></div>
-      ${mayPost ? `<div class="limo-v2-card"><textarea id="room-text" class="limo-v2-textarea" maxlength="10000" placeholder="پیام در اتاق عمومی..."></textarea><div class="room-expiry-popover" id="room-expiry-popover" hidden><div class="expiry-popover-head"><div><b>ماندگاری پیام</b><br><small>برای انتخاب مدت، دکمه ارسال را نگه دار</small></div><button class="icon-btn" type="button" onclick="LimoV2.closeRoomExpiryMenu()" aria-label="بستن"><i class="fa-solid fa-xmark"></i></button></div><div class="expiry-options" id="room-expiry-options"></div></div><div class="limo-v2-actions"><select id="room-expiry" class="limo-v2-select" aria-label="عمر پیام" hidden><option value="0">ماندگار</option><option value="300">۵ دقیقه</option><option value="1800">۳۰ دقیقه</option><option value="3600">۱ ساعت</option><option value="21600">۶ ساعت</option><option value="43200">۱۲ ساعت</option><option value="86400">۲۴ ساعت</option><option value="259200">۳ روز</option><option value="604800">۷ روز</option><option value="2592000">۳۰ روز</option></select><button class="limo-v2-btn room-send-button" id="room-send-button" onclick="LimoV2.handleRoomSendClick(event)" onpointerdown="LimoV2.beginRoomExpiryHold(event)" onpointerup="LimoV2.endRoomExpiryHold(event)" onpointercancel="LimoV2.cancelRoomExpiryHold()" onpointerleave="LimoV2.cancelRoomExpiryHold()" oncontextmenu="return false"><i class="fa-solid fa-paper-plane"></i> ارسال متن <span class="room-expiry-label" id="room-expiry-label">ماندگار</span></button>${room.room_kind==='channel' ? '' : '<button class="limo-v2-btn secondary" onclick="LimoV2.toggleRoomVoice()"><i class="fa-solid fa-microphone"></i> ویس (Premium)</button>'}<button class="limo-v2-btn secondary" onclick="LimoV2.chooseRoomMedia('image')"><i class="fa-regular fa-image"></i> عکس (Premium)</button><button class="limo-v2-btn secondary" onclick="LimoV2.chooseRoomMedia('video')"><i class="fa-solid fa-video"></i> فیلم (Premium)</button><button class="limo-v2-btn secondary" onclick="LimoV2.createPoll()"><i class="fa-solid fa-square-poll-vertical"></i> نظرسنجی</button></div><input id="room-image-file" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="LimoV2.uploadRoomMedia(event,'image')"><input id="room-video-file" type="file" accept="video/mp4,video/webm,video/quicktime" hidden onchange="LimoV2.uploadRoomMedia(event,'video')"><div class="limo-v2-note">عمر پیام از گزینه ماندگار تا ۳۰ روز قابل انتخاب است؛ برای تغییر، دکمه ارسال متن را نگه دار. ارسال عکس، فیلم و ویس مخصوص Premium است.</div></div>` : '<div class="limo-v2-note">این کانال فقط برای مدیران قابل ارسال است. پیام‌ها برای اعضا قابل مشاهده‌اند.</div>'}
+      <div id="room-polls"></div><button id="room-load-older" class="limo-v2-btn secondary" style="display:none;margin:8px auto" onclick="LimoV2.loadOlderRoomMessages()">نمایش پیام‌های قدیمی‌تر</button><div id="room-messages" class="limo-v2-card" style="min-height:180px;max-height:45vh;overflow:auto"></div>
+      ${mayPost ? `<div class="limo-v2-card"><textarea id="room-text" class="limo-v2-textarea" maxlength="10000" placeholder="پیام در اتاق عمومی..."></textarea><div class="room-expiry-popover" id="room-expiry-popover" hidden><div class="expiry-popover-head"><div><b>ماندگاری پیام</b><br><small>برای انتخاب مدت، دکمه ارسال را نگه دار</small></div><button class="icon-btn" type="button" onclick="LimoV2.closeRoomExpiryMenu()" aria-label="بستن"><i class="fa-solid fa-xmark"></i></button></div><div class="expiry-options" id="room-expiry-options"></div></div><div class="limo-v2-actions"><select id="room-expiry" class="limo-v2-select" aria-label="عمر پیام" hidden><option value="0">ماندگار</option><option value="5">۵ ثانیه</option><option value="10">۱۰ ثانیه</option><option value="30">۳۰ ثانیه</option><option value="60">۱ دقیقه</option><option value="300">۵ دقیقه</option><option value="3600">۱ ساعت</option><option value="86400">۱ روز</option><option value="604800">۷ روز</option><option value="2592000">۳۰ روز</option></select><button class="limo-v2-btn room-send-button" id="room-send-button" onclick="LimoV2.handleRoomSendClick(event)" onpointerdown="LimoV2.beginRoomExpiryHold(event)" onpointerup="LimoV2.endRoomExpiryHold(event)" onpointercancel="LimoV2.cancelRoomExpiryHold()" onpointerleave="LimoV2.cancelRoomExpiryHold()" oncontextmenu="return false"><i class="fa-solid fa-paper-plane"></i> ارسال متن <span class="room-expiry-label" id="room-expiry-label">ماندگار</span></button>${room.room_kind==='channel' ? '' : '<button class="limo-v2-btn secondary" onclick="LimoV2.toggleRoomVoice()"><i class="fa-solid fa-microphone"></i> ویس (Premium)</button>'}<button class="limo-v2-btn secondary" onclick="LimoV2.chooseRoomMedia('image')"><i class="fa-regular fa-image"></i> عکس (Premium)</button><button class="limo-v2-btn secondary" onclick="LimoV2.chooseRoomMedia('video')"><i class="fa-solid fa-video"></i> فیلم (Premium)</button><button class="limo-v2-btn secondary" onclick="LimoV2.createPoll()"><i class="fa-solid fa-square-poll-vertical"></i> نظرسنجی</button></div><input id="room-image-file" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="LimoV2.uploadRoomMedia(event,'image')"><input id="room-video-file" type="file" accept="video/mp4,video/webm,video/quicktime" hidden onchange="LimoV2.uploadRoomMedia(event,'video')"><div class="limo-v2-note">عمر پیام از گزینه ماندگار تا ۳۰ روز قابل انتخاب است؛ برای تغییر، دکمه ارسال متن را نگه دار. ارسال عکس، فیلم و ویس مخصوص Premium است.</div></div>` : '<div class="limo-v2-note">این کانال فقط برای مدیران قابل ارسال است. پیام‌ها برای اعضا قابل مشاهده‌اند.</div>'}
     `);
     await Promise.all([loadRoomMessages(),loadRoomPolls()]);
     roomChannel=db.channel(`limo-room-${room.id}-${Math.random().toString(36).slice(2,8)}`)
@@ -191,35 +233,93 @@
       .on('postgres_changes',{event:'*',schema:'public',table:'limo_polls'},()=>loadRoomPolls())
       .subscribe();
   }
-  async function loadRoomMessages() {
+  function compareRoomMessages(a,b) {
+    const time = String(a.created_at).localeCompare(String(b.created_at));
+    return time || String(a.id).localeCompare(String(b.id));
+  }
+  async function loadRoomMessages(before = null) {
     if(!activeRoom || !$('room-messages')) return;
-    const root=$('room-messages');
-    const {data,error}=await db.from('limo_room_messages').select('id,sender_id,sender_name,text,reactions,created_at,attachment_path,attachment_type,attachment_name,attachment_size').eq('room_id',activeRoom.id).order('created_at',{ascending:true}).limit(250);
+    const roomId = activeRoom.id;
+    const root = $('room-messages');
+    const wasNearBottom = root.scrollHeight - root.scrollTop - root.clientHeight < 90;
+    const oldHeight = root.scrollHeight, oldTop = root.scrollTop;
+    let query = db.from('limo_room_messages')
+      .select('id,sender_id,sender_name,text,reactions,created_at,attachment_path,attachment_type,attachment_name,attachment_size,is_pinned,is_forwarded,expires_at')
+      .eq('room_id', roomId).order('created_at',{ascending:false}).order('id',{ascending:false}).limit(100);
+    if (before?.created_at && before?.id) {
+      query = query.or(`created_at.lt.${before.created_at},and(created_at.eq.${before.created_at},id.lt.${before.id})`);
+    }
+    const {data,error}=await query;
+    if (activeRoom?.id !== roomId) return;
     if(error) {root.textContent=`خطا در دریافت پیام‌ها: ${error.message}`;return;}
-    roomMessageCache=data||[]; root.replaceChildren();
-    if(!roomMessageCache.length) {root.innerHTML=empty('هنوز پیامی در این اتاق نیست.');return;}
+    const newestFirst = data || [];
+    const page = newestFirst.slice().reverse();
+    if (before) {
+      roomMessageCache = [...page, ...roomMessageCache];
+      if (newestFirst.length) roomMessageCursor = {created_at:newestFirst[newestFirst.length-1].created_at,id:newestFirst[newestFirst.length-1].id};
+      roomMessageHasMore = newestFirst.length === 100;
+    } else {
+      if (page.length) {
+        const newestBoundary = page[0];
+        const retainedOlder = roomMessageCache.filter(m => compareRoomMessages(m,newestBoundary) < 0);
+        roomMessageCache = [...retainedOlder, ...page];
+      } else if (!roomMessageCache.length) roomMessageCache = [];
+      if (!roomMessageCursor && newestFirst.length) {
+        const oldest = newestFirst[newestFirst.length-1];
+        roomMessageCursor = {created_at:oldest.created_at,id:oldest.id};
+        roomMessageHasMore = newestFirst.length === 100;
+      }
+    }
+    const now = Date.now();
+    roomMessageCache = roomMessageCache.filter(m =>
+      (!m.expires_at || Date.parse(m.expires_at) > now) &&
+      (m.sender_id === user()?.uid || !core.isBlocked?.(m.sender_id))
+    ).sort(compareRoomMessages);
+    const olderButton = $('room-load-older');
+    if (olderButton) olderButton.style.display = roomMessageHasMore ? 'block' : 'none';
+    root.replaceChildren();
+    if(!roomMessageCache.length) {root.append(document.createTextNode('هنوز پیامی در این اتاق نیست.'));return;}
     const ids=[...new Set(roomMessageCache.filter(m=>m.sender_name!=='کاربر ناشناس').map(m=>m.sender_id).filter(Boolean))];
+    publicProfileCache.clear();
     if(ids.length){const {data:profiles,error:profileError}=await db.from('profiles').select('id,username,display_name,avatar_url').in('id',ids);if(!profileError)(profiles||[]).forEach(profile=>publicProfileCache.set(profile.id,profile));}
+    if (activeRoom?.id !== roomId) return;
     roomMessageCache.forEach(m=>{
       const item=document.createElement('div'); item.className='limo-v2-message'+(m.sender_id===user().uid?' mine':'');
       const anonymous=m.sender_name==='کاربر ناشناس';
       const profile=anonymous?{}:(publicProfileCache.get(m.sender_id)||{});
       const author=document.createElement(anonymous?'div':'button');if(!anonymous){author.type='button';author.onclick=()=>openUser(m.sender_id);}author.className='limo-v2-author'+(anonymous?' anonymous':'');
       const avatar=document.createElement('div');avatar.className='avatar';avatar.textContent=anonymous?'؟':(profile.display_name||m.sender_name||'ل').slice(0,1).toUpperCase();
-      if(!anonymous&&profile.avatar_url?.startsWith('http')){const img=document.createElement('img');img.src=profile.avatar_url;img.alt='';avatar.textContent='';avatar.append(img);}
+      if(!anonymous&&profile.avatar_url?.startsWith('http')){const img=document.createElement('img');img.src=profile.avatar_url;img.alt='';img.referrerPolicy='no-referrer';avatar.textContent='';avatar.append(img);}
       const authorInfo=document.createElement('span');const authorName=document.createElement('b');authorName.textContent=anonymous?'کاربر ناشناس':(profile.display_name||m.sender_name||'کاربر');const authorHandle=document.createElement('small');authorHandle.textContent=anonymous?'هویت پنهان · '+timeLocal(m.created_at):(profile.username?'@'+profile.username+' · '+timeLocal(m.created_at):timeLocal(m.created_at));authorInfo.append(authorName,authorHandle);
       author.append(avatar,authorInfo);if(!anonymous){const action=document.createElement('i');action.className='fa-solid '+(m.sender_id===user().uid?'fa-user-gear':'fa-paper-plane');action.style.marginRight='auto';action.style.color='var(--muted)';author.append(action);}item.append(author);
-      const text=document.createElement('div');text.textContent=m.text||'';item.append(text);
+      if(m.is_forwarded){const tag=document.createElement('small');tag.textContent='↗ پیام منتقل‌شده';tag.className='limo-v2-muted';item.append(tag);}if(m.is_pinned){const tag=document.createElement('small');tag.textContent='📌 پیام سنجاق‌شده';tag.className='limo-v2-muted';item.append(tag);}const text=document.createElement('div');text.textContent=m.text||'';item.append(text);
       if(m.attachment_path){
-        if(m.attachment_type==='audio'){const audio=document.createElement('audio');audio.controls=true;audio.preload='none';audio.className='limo-v2-audio';item.append(audio);db.storage.from('chat-media').createSignedUrl(m.attachment_path,3600).then(({data})=>{if(data?.signedUrl)audio.src=data.signedUrl;});}
-        else if(m.attachment_type==='video'){const video=document.createElement('video');video.controls=true;video.playsInline=true;video.preload='metadata';video.className='limo-v2-room-media';item.append(video);db.storage.from('chat-media').createSignedUrl(m.attachment_path,3600).then(({data})=>{if(data?.signedUrl)video.src=data.signedUrl;});}
-        else if(m.attachment_type==='image'){const img=document.createElement('img');img.alt=m.attachment_name||'تصویر';img.className='limo-v2-room-media';item.append(img);db.storage.from('chat-media').createSignedUrl(m.attachment_path,3600).then(({data})=>{if(data?.signedUrl)img.src=data.signedUrl;});}
+        if(m.attachment_type==='audio'){
+          const audioWrap=document.createElement('div');audioWrap.className='limo-audio-wrap';
+          const audio=document.createElement('audio');audio.controls=true;audio.preload='none';audio.className='limo-v2-audio';
+          const caption=document.createElement('small');caption.textContent=m.attachment_name||'پیام صوتی · مدت نامشخص';
+          const speed=document.createElement('button');speed.type='button';speed.className='limo-v2-btn secondary';speed.textContent='سرعت ۱×';
+          const rates=[1,1.25,1.5,2,0.75];let rateIndex=0;speed.onclick=()=>{rateIndex=(rateIndex+1)%rates.length;audio.playbackRate=rates[rateIndex];speed.textContent=`سرعت ${rates[rateIndex]}×`;};
+          audio.addEventListener('loadedmetadata',()=>{if(Number.isFinite(audio.duration))caption.textContent=`${m.attachment_name||'پیام صوتی'} · ${Math.floor(audio.duration/60)}:${String(Math.floor(audio.duration%60)).padStart(2,'0')}`;});
+          audioWrap.append(audio,caption,speed);item.append(audioWrap);
+          setSignedMediaSource(audio,m.attachment_path,m.expires_at).catch(error=>console.warn('Room audio URL:',error));
+        }
+        else if(m.attachment_type==='video'){const video=document.createElement('video');video.controls=true;video.playsInline=true;video.preload='metadata';video.className='limo-v2-room-media';item.append(video);setSignedMediaSource(video,m.attachment_path,m.expires_at).catch(error=>console.warn('Room video URL:',error));}
+        else if(m.attachment_type==='image'){const img=document.createElement('img');img.alt=m.attachment_name||'تصویر';img.className='limo-v2-room-media';item.append(img);setSignedMediaSource(img,m.attachment_path,m.expires_at).catch(error=>console.warn('Room image URL:',error));}
       }
       const actions=document.createElement('div');actions.className='limo-v2-actions';
       const react=document.createElement('button');react.className='limo-v2-btn secondary';react.textContent='👍 واکنش';react.onclick=()=>reactRoomMessage(m.id,'👍');
       actions.append(react);item.append(actions);root.append(item);
     });
-    root.scrollTop=root.scrollHeight;
+    if (before) root.scrollTop = oldTop + (root.scrollHeight-oldHeight);
+    else if (wasNearBottom) root.scrollTop = root.scrollHeight;
+  }
+  async function loadOlderRoomMessages() {
+    if(!activeRoom || !roomMessageCursor || !roomMessageHasMore || roomLoadingOlder) return;
+    roomLoadingOlder=true;const button=$('room-load-older');if(button){button.disabled=true;button.textContent='در حال دریافت…';}
+    try { await loadRoomMessages(roomMessageCursor); }
+    catch(error){console.error('Older room messages:',error);toast('دریافت پیام‌های قدیمی‌تر ناموفق بود.');}
+    finally {roomLoadingOlder=false;if(button){button.disabled=false;button.textContent='نمایش پیام‌های قدیمی‌تر';}}
   }
   function beginRoomExpiryHold(event){if(event?.button!==undefined&&event.button!==0)return;clearTimeout(roomExpiryHoldTimer);roomExpiryHoldOpened=false;roomExpiryHoldTimer=setTimeout(()=>{roomExpiryHoldOpened=true;skipRoomExpiryClick=true;openRoomExpiryMenu();},430);}
   function endRoomExpiryHold(){clearTimeout(roomExpiryHoldTimer);roomExpiryHoldTimer=null;if(roomExpiryHoldOpened)setTimeout(()=>{skipRoomExpiryClick=false;roomExpiryHoldOpened=false;},150);}
@@ -238,7 +338,7 @@
     const input=$('room-text'), text=input?.value.trim(); if(!text) return;
     const me=user();
     const payload={room_id:activeRoom.id,sender_id:me.uid,sender_name:prefs().anonymous?'کاربر ناشناس':(me.displayName||me.username),text};
-    const ttl=Number($('room-expiry')?.value||0);if(ttl>0)payload.expires_at=new Date(Date.now()+ttl*1000).toISOString();
+    const ttl=Number($('room-expiry')?.value||0);payload.expires_in_seconds=ttl;payload.client_message_id=crypto.randomUUID();
     const {error}=await db.from('limo_room_messages').insert(payload);
     if(error) return toast(error.message.includes('LIMO_RATE_LIMIT')?'سقف ارسال ۵ پیام در ۳۰ ثانیه است.':`ارسال نشد: ${error.message}`);
     input.value=''; await loadRoomMessages();
@@ -260,7 +360,7 @@
     const upload=await db.storage.from('chat-media').upload(path,file,{contentType:file.type,upsert:false});
     if(upload.error)return toast(`آپلود فایل ناموفق بود: ${upload.error.message}`);
     const payload={room_id:activeRoom.id,sender_id:me.uid,sender_name:prefs().anonymous?'کاربر ناشناس':(me.displayName||me.username),text:'',attachment_path:path,attachment_type:kind,attachment_name:file.name||kind,attachment_size:file.size};
-    const ttl=Number($('room-expiry')?.value||0);if(ttl>0)payload.expires_at=new Date(Date.now()+ttl*1000).toISOString();
+    const ttl=Number($('room-expiry')?.value||0);payload.expires_in_seconds=ttl;payload.client_message_id=crypto.randomUUID();
     const {error}=await db.from('limo_room_messages').insert(payload);
     if(error){await db.storage.from('chat-media').remove([path]);return toast(`ثبت فایل ناموفق بود: ${error.message}`);}
     toast(kind==='image'?'تصویر ارسال شد.':'ویدئو ارسال شد.');loadRoomMessages();
@@ -331,9 +431,9 @@
         const up=await db.storage.from('chat-media').upload(path,blob,{contentType:safeMime,upsert:false});
         if(up.error) return toast(`بارگذاری صدا ناموفق بود: ${up.error.message}`);
         const payload={room_id:activeRoom.id,sender_id:me.uid,sender_name:prefs().anonymous?'کاربر ناشناس':(me.displayName||me.username),text:'',attachment_path:path,attachment_type:'audio',attachment_name:'پیام صوتی',attachment_size:blob.size};
-        const ttl=Number($('room-expiry')?.value||0);if(ttl>0)payload.expires_at=new Date(Date.now()+ttl*1000).toISOString();
+        const ttl=Number($('room-expiry')?.value||0);payload.expires_in_seconds=ttl;payload.client_message_id=crypto.randomUUID();
         const ins=await db.from('limo_room_messages').insert(payload);
-        if(ins.error) return toast(`ثبت پیام صوتی ناموفق بود: ${ins.error.message}`);
+        if(ins.error){await db.storage.from('chat-media').remove([path]);return toast(`ثبت پیام صوتی ناموفق بود: ${ins.error.message}`);}
         loadRoomMessages();
       };
       roomRecorder.start();toast('در حال ضبط پیام صوتی؛ دوباره دکمه را بزن تا ارسال شود.');
@@ -419,7 +519,7 @@
   // ------------------------- LIMO AI (private, in-browser helpers) -------------------------
   function renderAI() {
     featureHeader('Limo AI · دستیار هوشمند');
-    setBody(`<div class="limo-v2-card"><h3>ابزارهای هوشمند محلی</h3><p class="limo-v2-muted">این ابزارها متن گفتگو را در همین مرورگر تحلیل می‌کنند و محتوای چت را به سرویس بیرونی نمی‌فرستند. این نسخه هنوز به مدل زبانی مولد متصل نیست.</p><div class="limo-v2-actions"><button class="limo-v2-btn" onclick="LimoV2.aiSummarize()">خلاصه گفتگو</button><button class="limo-v2-btn secondary" onclick="LimoV2.aiTasks()">استخراج کارها</button><button class="limo-v2-btn secondary" onclick="LimoV2.aiLinks()">استخراج لینک‌ها</button></div></div><div class="limo-v2-card"><h3>جستجوی معنایی ساده در متن</h3><input id="ai-query" class="limo-v2-input" placeholder="واژه یا عبارت موردنظر..."><button class="limo-v2-btn" onclick="LimoV2.aiSearch()">جستجو در تاریخچه</button></div><div class="limo-v2-card"><h3>پیشنهاد پاسخ</h3><div class="limo-v2-actions"><button class="limo-v2-btn secondary" onclick="LimoV2.aiReply('formal')">رسمی</button><button class="limo-v2-btn secondary" onclick="LimoV2.aiReply('friendly')">دوستانه</button><button class="limo-v2-btn secondary" onclick="LimoV2.aiReply('short')">کوتاه</button></div><textarea id="ai-result" class="limo-v2-textarea" readonly placeholder="نتیجه ابزارها اینجا نمایش داده می‌شود..."></textarea><button class="limo-v2-btn secondary" onclick="LimoV2.copyAI()">کپی نتیجه</button></div><div class="limo-v2-note">برای پاسخ‌سازی مولد، ترجمه خودکار و خلاصه‌سازی ابری باید یک Edge Function امن در Supabase و کلید ارائه‌دهنده در Secret سمت سرور نصب شود؛ قرار دادن کلید API در فایل عمومی GitHub ناامن است.</div>`);
+    setBody(`<div class="limo-v2-card"><h3>ابزارهای هوشمند محلی</h3><p class="limo-v2-muted">این ابزارها متن گفتگو را در همین مرورگر تحلیل می‌کنند و محتوای چت را به سرویس بیرونی نمی‌فرستند. این نسخه هنوز به مدل زبانی مولد متصل نیست.</p><div class="limo-v2-actions"><button class="limo-v2-btn" onclick="LimoV2.aiSummarize()">خلاصه گفتگو</button><button class="limo-v2-btn secondary" onclick="LimoV2.aiTasks()">استخراج کارها</button><button class="limo-v2-btn secondary" onclick="LimoV2.aiLinks()">استخراج لینک‌ها</button></div></div><div class="limo-v2-card"><h3>جستجوی معنایی ساده در متن</h3><input id="ai-query" class="limo-v2-input" placeholder="واژه یا عبارت موردنظر..."><button class="limo-v2-btn" onclick="LimoV2.aiSearch()">جستجو در تاریخچه</button></div><div class="limo-v2-card"><h3>قالب‌های آماده پاسخ (بدون مدل هوش مصنوعی)</h3><div class="limo-v2-actions"><button class="limo-v2-btn secondary" onclick="LimoV2.aiReply('formal')">رسمی</button><button class="limo-v2-btn secondary" onclick="LimoV2.aiReply('friendly')">دوستانه</button><button class="limo-v2-btn secondary" onclick="LimoV2.aiReply('short')">کوتاه</button></div><textarea id="ai-result" class="limo-v2-textarea" readonly placeholder="نتیجه ابزارها اینجا نمایش داده می‌شود..."></textarea><button class="limo-v2-btn secondary" onclick="LimoV2.copyAI()">کپی نتیجه</button></div><div class="limo-v2-note">برای پاسخ‌سازی مولد، ترجمه خودکار و خلاصه‌سازی ابری باید یک Edge Function امن در Supabase و کلید ارائه‌دهنده در Secret سمت سرور نصب شود؛ قرار دادن کلید API در فایل عمومی GitHub ناامن است.</div>`);
   }
   async function getContextMessages() {
     const c=chat();
@@ -449,13 +549,13 @@
 
   // ------------------------- LIMO MINI -------------------------
   function renderMini(){
-    featureHeader('Limo Mini · مینی‌ابزارها');
+    featureHeader('Limo Mini · ابزارهای داخلی');
     setBody(`<div class="limo-v2-grid">
       <button class="limo-v2-tile" onclick="LimoV2.miniDice()"><i class="fa-solid fa-dice"></i><b>تاس</b><small>تاس تصادفی امن</small></button>
       <button class="limo-v2-tile" onclick="LimoV2.miniCalculator()"><i class="fa-solid fa-calculator"></i><b>ماشین‌حساب</b><small>محاسبات پایه</small></button>
       <button class="limo-v2-tile" onclick="LimoV2.miniText()"><i class="fa-solid fa-align-left"></i><b>ابزار متن</b><small>شمارش حروف و کلمات</small></button>
       <button class="limo-v2-tile" onclick="LimoV2.miniPicker()"><i class="fa-solid fa-shuffle"></i><b>انتخاب‌گر</b><small>انتخاب تصادفی گزینه</small></button>
-    </div><div id="mini-workspace" class="limo-v2-card">یک مینی‌ابزار را انتخاب کن. ابزارهای این نسخه داخل مرورگر اجرا می‌شوند و داده‌ای به سرور نمی‌فرستند.</div>`);
+    </div><div id="mini-workspace" class="limo-v2-card">این نسخه فقط ابزارهای داخلی و ازپیش‌تعریف‌شده دارد؛ اجرای مینی‌اپ ثالث و sandbox مجوزدار هنوز پیاده‌سازی نشده است. ابزارهای داخلی در مرورگر اجرا می‌شوند و داده‌ای به سرور نمی‌فرستند.</div>`);
   }
   function miniDice(){const a=new Uint32Array(1);crypto.getRandomValues(a);const value=(a[0]%6)+1;const root=$('mini-workspace');root.innerHTML=`<h3>تاس لیمو</h3><div class="limo-v2-stat" style="font-size:58px;text-align:center">${['⚀','⚁','⚂','⚃','⚄','⚅'][value-1]}</div><p style="text-align:center">عدد ${value}</p><button class="limo-v2-btn" onclick="LimoV2.miniDice()">پرتاب دوباره</button>`;}
   function miniCalculator(){const root=$('mini-workspace');root.innerHTML=`<h3>ماشین‌حساب امن</h3><input id="mini-expression" class="limo-v2-input" dir="ltr" placeholder="مثلاً (12+8)*3/2"><button class="limo-v2-btn" onclick="LimoV2.calcRun()">محاسبه</button><p id="mini-calc-result" class="limo-v2-stat"></p><small class="limo-v2-muted">عملگرها: + − × ÷ % و پرانتز</small>`;}
@@ -512,9 +612,9 @@
         const path=`${c.type==='global'?'global':c.id}/${me.uid}/${crypto.randomUUID()}.${ext}`;
         const safeMime=(blob.type||'audio/webm').split(';')[0];
         const upload=await db.storage.from('chat-media').upload(path,blob,{contentType:safeMime,upsert:false});if(upload.error)return toast(`آپلود ویس ناموفق بود: ${upload.error.message}`);
-        const table=c.type==='global'?'global_messages':'messages';const payload={sender_id:me.uid,sender_name:me.displayName||me.username,text:'',attachment_path:path,attachment_type:'audio',attachment_name:'پیام صوتی',attachment_size:blob.size};if(c.type==='private')payload.chat_id=c.id;
-        const ttl=Number($('limo-expiry-select')?.value||0);if(ttl>0)payload.expires_at=new Date(Date.now()+ttl*1000).toISOString();
-        const {error}=await db.from(table).insert(payload);if(error)return toast(`ثبت ویس ناموفق بود: ${error.message}`);
+        const table=c.type==='global'?'global_messages':'messages';const payload={sender_id:me.uid,sender_name:prefs().anonymous?'کاربر ناشناس':(me.displayName||me.username),text:'',attachment_path:path,attachment_type:'audio',attachment_name:'پیام صوتی',attachment_size:blob.size};if(c.type==='private')payload.chat_id=c.id;
+        const ttl=Number($('limo-expiry-select')?.value||0);payload.expires_in_seconds=ttl;payload.client_message_id=crypto.randomUUID();
+        const {error}=await db.from(table).insert(payload);if(error){await db.storage.from('chat-media').remove([path]);return toast(`ثبت ویس ناموفق بود: ${error.message}`);}
         core.refreshMessages?.(c.id);
       };
       mainRecorder.start();button?.classList.add('recording');button.innerHTML='<i class="fa-solid fa-stop"></i>';toast('در حال ضبط ویس؛ برای پایان و ارسال دوباره دکمه میکروفون را بزن.');
@@ -530,30 +630,59 @@
 
   function renderPremium(){
     featureHeader('Limo Premium');
-    setBody(`<div class="premium-hero"><i class="fa-solid fa-crown" style="font-size:42px;color:var(--primary-dark)"></i><h2 style="margin:8px 0">Limo Premium</h2><p class="limo-v2-muted">اشتراک ویژه لیموچت؛ پیام‌رسانی پایه و امنیت اصلی برای همه رایگان می‌ماند.</p><div id="premium-status" class="limo-v2-stat">در حال بررسی وضعیت حساب…</div></div><div class="limo-v2-card"><h3>امکانات Premium</h3><div class="premium-benefits"><div class="premium-benefit"><i class="fa-regular fa-image"></i> ارسال عکس</div><div class="premium-benefit"><i class="fa-solid fa-video"></i> ارسال ویدئو</div><div class="premium-benefit"><i class="fa-solid fa-microphone"></i> پیام صوتی</div><div class="premium-benefit"><i class="fa-solid fa-cloud-arrow-up"></i> سهمیه رسانه بیشتر</div></div><p class="limo-v2-muted">عکس، فیلم و ویس در گفتگوهای خصوصی، گفتگوی عمومی و اتاق‌های عمومی برای حساب‌های Premium فعال است. سقف حجم و فرمت فایل در برنامه و دیتابیس کنترل می‌شود.</p></div><div class="limo-v2-card"><h3>درخواست خرید یا فعال‌سازی</h3><p class="limo-v2-muted">برای خرید اشتراک، درخواست آماده را به پشتیبانی Premium در تلگرام بفرست. پیام به‌صورت پیش‌نویس باز می‌شود و ارسال نهایی را خودت در تلگرام تأیید می‌کنی.</p><button class="limo-v2-btn" style="width:100%;padding:13px" onclick="LimoV2.requestPremium()"><i class="fa-brands fa-telegram"></i> ارسال درخواست به @premiume</button><button class="limo-v2-btn secondary" style="width:100%;margin-top:8px" onclick="LimoV2.copyPremiumRequest()">کپی متن درخواست</button></div><div class="limo-v2-note">پرداخت خودکار در سایت فعال نیست. پس از هماهنگی و بررسی پرداخت، مدیر حساب شما را از پنل مدیریت Premium می‌کند. هیچ رمز عبور یا کد ورود تلگرام را برای کسی ارسال نکن.</div>`);
+    setBody(`<div class="premium-hero"><i class="fa-solid fa-crown" style="font-size:42px;color:var(--primary-dark)"></i><h2 style="margin:8px 0">Limo Premium</h2><p class="limo-v2-muted">اشتراک ویژه لیموچت؛ پیام‌رسانی پایه و امنیت اصلی برای همه رایگان می‌ماند.</p><div id="premium-status" class="limo-v2-stat">در حال بررسی وضعیت حساب…</div></div><div class="limo-v2-card"><h3>امکانات Premium</h3><div class="premium-benefits"><div class="premium-benefit"><i class="fa-regular fa-image"></i> ارسال عکس</div><div class="premium-benefit"><i class="fa-solid fa-video"></i> ارسال ویدئو</div><div class="premium-benefit"><i class="fa-solid fa-microphone"></i> پیام صوتی</div><div class="premium-benefit"><i class="fa-solid fa-cloud-arrow-up"></i> سهمیه رسانه بیشتر</div></div><p class="limo-v2-muted">عکس، فیلم و ویس در گفتگوهای خصوصی، گفتگوی عمومی و اتاق‌های عمومی برای حساب‌های Premium فعال است. سقف حجم و فرمت فایل در برنامه و دیتابیس کنترل می‌شود.</p></div><div class="limo-v2-card"><h3>درخواست خرید یا فعال‌سازی</h3><label for="premium-plan">مدت اشتراک درخواستی</label><select id="premium-plan" class="limo-v2-select"><option value="۱ ماه">۱ ماه</option><option value="۳ ماه">۳ ماه</option><option value="۱۲ ماه">۱۲ ماه</option></select><p class="limo-v2-muted">برای خرید اشتراک، درخواست مستقیماً در گفتگوی داخلی با حساب رسمی @premium در لیموچت ارسال می‌شود.</p><button class="limo-v2-btn" style="width:100%;padding:13px" onclick="LimoV2.requestPremium()"><i class="fa-solid fa-paper-plane"></i> ارسال درخواست در لیموچت به @premium</button><button class="limo-v2-btn secondary" style="width:100%;margin-top:8px" onclick="LimoV2.copyPremiumRequest()">کپی متن درخواست</button></div><div class="limo-v2-note">پرداخت خودکار در سایت فعال نیست. پس از هماهنگی و بررسی پرداخت، مدیر حساب شما را از پنل مدیریت Premium می‌کند. ارسال درخواست به معنی پرداخت یا فعال‌شدن خودکار اشتراک نیست.</div>`);
     refreshPremiumStatus();
   }
   async function refreshPremiumStatus(){
     const el=$('premium-status');if(!el)return;
-    try{premiumStatusCache=await isPremium(true);el.textContent=premiumStatusCache?'اشتراک Premium شما فعال است':'حساب شما در طرح رایگان است';el.style.color=premiumStatusCache?'var(--primary-dark)':'var(--muted)';}
+    try{premiumStatusCache=await isPremium(true);el.textContent=premiumStatusCache?'اشتراک Premium شما فعال است':'حساب شما در طرح رایگان است یا اعتبار Premium پایان یافته است';el.style.color=premiumStatusCache?'var(--primary-dark)':'var(--muted)';}
     catch(error){el.textContent='وضعیت اشتراک دریافت نشد';console.warn(error);}
   }
-  function premiumRequestText(){const me=user()||{};return `سلام، برای خرید یا فعال‌سازی اشتراک Limo Premium درخواست دارم.
+  function premiumRequestText(){const me=user()||{};const plan=$('premium-plan')?.value||'۱ ماه';return `سلام، برای خرید یا فعال‌سازی اشتراک Limo Premium درخواست دارم.
+مدت اشتراک درخواستی: ${plan}
 آیدی لیموچت: @${me.username||'نامشخص'}
 نام نمایشی: ${me.displayName||'نامشخص'}
 شناسه حساب: ${me.uid||'نامشخص'}
 لطفاً قیمت، مدت اشتراک و روش پرداخت را اعلام کنید.
 
 لینک لیموچت: https://xdevelopre.github.io/limochat/`;}
-  function requestPremium(){const url='https://t.me/premiume?text='+encodeURIComponent(premiumRequestText());window.open(url,'_blank','noopener,noreferrer');}
+  async function requestPremium(){
+    const request=premiumRequestText();
+    try {
+      const {data:target,error}=await db.from('profiles').select('id,username,display_name,avatar_url').eq('username','premium').maybeSingle();
+      if(error)throw error;
+      if(!target){toast('حساب رسمی @premium هنوز در لیموچت ثبت نشده است؛ درخواست ارسال نشد.');return;}
+      await startPrivateChat(target.id,target.display_name||'Limo Premium',target.avatar_url||'');
+      const input=$('message-input');
+      if(!input){toast('گفتگوی @premium باز شد؛ متن درخواست را کپی و ارسال کن.');await navigator.clipboard?.writeText(request);return;}
+      input.value=request;input.dispatchEvent(new Event('input',{bubbles:true}));
+      await window.sendMessage();
+      toast('درخواست Premium در گفتگوی داخلی @premium ارسال شد.');
+    } catch(error){console.error('Premium in-app request:',error);toast('بازکردن گفتگوی @premium ناموفق بود: '+(error.message||'خطای سرور'));}
+  }
   async function copyPremiumRequest(){try{await navigator.clipboard.writeText(premiumRequestText());toast('متن درخواست Premium کپی شد.');}catch{toast(premiumRequestText());}}
 
   function renderLanguage(){
-    featureHeader('زبان و منطقه');
-    const current=prefs().locale||'fa';
-    setBody(`<div class="limo-v2-card"><h3>زبان رابط</h3><select id="limo-locale" class="limo-v2-select"><option value="fa" ${current==='fa'?'selected':''}>فارسی</option><option value="en" ${current==='en'?'selected':''}>English (beta)</option></select><button class="limo-v2-btn" onclick="LimoV2.saveLanguage()">ذخیره زبان</button><div class="limo-v2-note">فارسی زبان کامل فعلی است. حالت انگلیسی در این نسخه جهت‌نمای صفحه و بخش‌های نسخه ۲ را تغییر می‌دهد؛ ترجمه همه متن‌های نسخه پایه هنوز کامل نیست.</div></div><div class="limo-v2-card"><h3>حریم خصوصی</h3><p class="limo-v2-muted">زبان و منطقه فقط در تنظیمات حساب ذخیره می‌شود. شماره تلفن یا موقعیت دقیق برای این قابلیت لازم نیست.</p></div>`);
+    featureHeader('زبان و جهت نمایش');
+    const locale=prefs().locale==='en'?'en':'fa';
+    const direction=prefs().direction==='ltr'?'ltr':'rtl';
+    setBody(`<div class="limo-v2-card"><h3>Language / زبان برنامه</h3><label>زبان رابط</label><select id="limo-locale" class="limo-v2-select"><option value="fa" ${locale==='fa'?'selected':''}>فارسی</option><option value="en" ${locale==='en'?'selected':''}>English</option></select><label>جهت نمایش مستقل از زبان</label><select id="limo-direction" class="limo-v2-select"><option value="rtl" ${direction==='rtl'?'selected':''}>راست به چپ (RTL)</option><option value="ltr" ${direction==='ltr'?'selected':''}>چپ به راست (LTR)</option></select><button class="limo-v2-btn" onclick="LimoV2.saveLanguage()">ذخیره زبان و جهت</button><p class="limo-v2-muted">تغییر زبان روی برچسب‌های ترجمه‌شده و جهت سند اعمال می‌شود. بخش‌هایی که هنوز ترجمه نشده‌اند با زبان اصلی باقی می‌مانند.</p></div>`);
   }
-  async function saveLanguage(){const locale=$('limo-locale')?.value||'fa';try{await core.setPref?.('locale',locale);}catch(error){return toast('ذخیره زبان ناموفق بود: '+error.message);}document.documentElement.lang=locale;document.documentElement.dir=locale==='fa'?'rtl':'ltr';toast(locale==='fa'?'زبان فارسی انتخاب شد.':'حالت آزمایشی انگلیسی انتخاب شد.');}
+  async function saveLanguage(){
+    const locale=$('limo-locale')?.value==='en'?'en':'fa';
+    const direction=$('limo-direction')?.value==='ltr'?'ltr':'rtl';
+    try{await core.setPref('locale',locale);await core.setPref('direction',direction);document.documentElement.lang=locale;document.documentElement.dir=direction;applyBasicLocale(locale);toast('زبان و جهت نمایش ذخیره شد.');}
+    catch(error){toast('ذخیره تنظیمات زبان ناموفق بود: '+(error.message||''));}
+  }
+  const basicTranslations={
+    'چت‌ها':'Chats','تماس‌ها':'Calls','برنامه‌ها':'Apps','تنظیمات':'Settings','همه':'All','خصوصی':'Private','عمومی':'Public','دستیار':'Assistant','لیمو چت':'Limo Chat','شروع گفتگو':'New chat','جستجوی کاربر':'Search users','زبان برنامه':'App language','حساب و حریم خصوصی':'Account & privacy','حساب کاربری، آیدی و رمز عبور':'Account, username & password','حریم خصوصی و چت ایمن':'Privacy & chat security','کاربران مسدودشده':'Blocked users','جهان لیمو و اتاق‌های عمومی':'Limo World & public rooms','دستیار هوشمند Limo AI':'Limo AI assistant','فضاهای همکاری Limo Space':'Limo Space collaboration','مینی‌اپ‌های لیمو':'Limo Mini apps','پیام‌های زمان‌دار':'Scheduled messages','اشتراک Limo Premium':'Limo Premium subscription','زبان و منطقه':'Language & region','تم مات Aero و ظاهر':'Themes & appearance','اعلان‌ها':'Notifications','جستجوی کاربران و دعوت دوستان':'Find users & invite friends','داده‌ها و ذخیره‌سازی':'Data & storage','درباره لیمو چت':'About Limo Chat','بررسی اتصال و عیب‌یابی':'Connection diagnostics','خروج از حساب':'Sign out','حساب ندارید؟':'No account?','ورود':'Sign in','ثبت‌نام کنید':'Sign up','نام نمایشی':'Display name','بیوگرافی':'Bio','ذخیره نمایه':'Save profile','جستجو':'Search','پیام':'Message','ارسال':'Send','بستن':'Close','ذخیره':'Save','بازگشت':'Back','لغو':'Cancel','تماس':'Call','حذف':'Delete','گزارش':'Report','پروفایل عمومی':'Public profile','شروع گفتگوی خصوصی':'Start private chat','مخاطبان':'Contacts','ساخت گروه':'Create group','ساخت کانال':'Create channel','مدیریت کاربران':'User management','مدیریت گزارش‌ها':'Report management'
+  };
+  function applyBasicLocale(locale){
+    if(locale!=='en')return;
+    const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let node;
+    while((node=walker.nextNode())){const raw=node.nodeValue;const key=raw.trim();if(basicTranslations[key])node.nodeValue=raw.replace(key,basicTranslations[key]);}
+    document.querySelectorAll('input[placeholder],textarea[placeholder],button[aria-label]').forEach(el=>{const attr=el.hasAttribute('placeholder')?'placeholder':'aria-label';if(basicTranslations[el.getAttribute(attr)])el.setAttribute(attr,basicTranslations[el.getAttribute(attr)]);});
+  }
   function renderProfileId(){
     const me=user();if(!me)return;const publicId=`limo_${me.uid.replaceAll('-','').slice(0,12)}`;const profileUrl=core.getBaseUrl()+`?user=${encodeURIComponent(me.username)}`;
     featureHeader('Limo ID · هویت دیجیتال');
@@ -576,10 +705,10 @@
     if(!navigator.onLine||!user())return;const queue=readOutbox();if(!queue.length)return;
     const remaining=[];
     for(let i=0;i<queue.length;i++){
-      const item=queue[i],me=user();let table=item.type==='global'?'global_messages':'messages';const payload={sender_id:me.uid,sender_name:me.displayName||me.username,text:item.text};if(item.type==='private')payload.chat_id=item.chatId;
-      if(Number(item.ttl)>0)payload.expires_at=new Date(Date.now()+Number(item.ttl)*1000).toISOString();
+      const item=queue[i],me=user();let table=item.type==='global'?'global_messages':'messages';const payload={sender_id:me.uid,sender_name:me.displayName||me.username,text:item.text,client_message_id:item.id,expires_in_seconds:Number(item.ttl)||0};if(item.type==='private')payload.chat_id=item.chatId;
       const {error}=await db.from(table).insert(payload);
-      if(error){remaining.push(item,...queue.slice(i+1));toast('بعضی پیام‌های صف آفلاین هنوز ارسال نشدند؛ دوباره تلاش می‌شود.');break;}
+      if(error && error.code==='23505'){const {data:existing,error:lookupError}=await db.from(table).select('id').eq('sender_id',me.uid).eq('client_message_id',item.id).maybeSingle();if(lookupError||!existing){remaining.push(item,...queue.slice(i+1));toast('بررسی ارسال قبلی پیام ناموفق بود؛ پیام در صف حفظ شد.');break;}}
+      else if(error){remaining.push(item,...queue.slice(i+1));toast('بعضی پیام‌های صف آفلاین هنوز ارسال نشدند؛ دوباره تلاش می‌شود.');break;}
     }
     writeOutbox(remaining);if(!remaining.length&&queue.length)toast(`${queue.length} پیام آفلاین ارسال شد.`);
     const c=chat();if(c.id)core.refreshMessages?.(c.id);
@@ -600,7 +729,7 @@
     const me=user();add('نشست کاربر',!!me?.uid,me?.username?`واردشده با @${me.username}`:'نشست فعال کاربری پیدا نشد.');
     if(me?.uid){
       const tests=[
-        ['پروفایل کاربر',()=>db.from('profiles').select('id,username,is_premium,is_suspended').eq('id',me.uid).single(),d=>`@${d.username||me.username} · ${d.is_premium?'Premium':'Free'} · ${d.is_suspended?'تعلیق‌شده':'فعال'}`],
+        ['پروفایل کاربر',()=>db.from('profiles').select('id,username,is_premium,premium_expires_at,is_suspended').eq('id',me.uid).single(),d=>`@${d.username||me.username} · ${d.is_premium&&(!d.premium_expires_at||Date.parse(d.premium_expires_at)>Date.now())?'Premium':'Free'} · ${d.is_suspended?'تعلیق‌شده':'فعال'}`],
         ['تنظیمات ذخیره‌شده',()=>db.from('user_settings').select('user_id').eq('user_id',me.uid).maybeSingle(),d=>d?'رکورد تنظیمات در دیتابیس موجود است.':'رکوردی هنوز ساخته نشده؛ اولین تغییر تنظیمات آن را ایجاد می‌کند.'],
         ['جدول گفتگوی عمومی',()=>db.from('global_messages').select('id',{count:'exact',head:true}),d=>`دسترسی خواندن موفق · ${d.count??'تعداد نامشخص'} پیام`],
         ['فهرست اتاق‌های World',()=>db.from('limo_public_rooms').select('id',{count:'exact',head:true}).eq('is_public',true).eq('is_archived',false),d=>`دسترسی خواندن موفق · ${d.count??'تعداد نامشخص'} اتاق`],
@@ -622,9 +751,9 @@
   // Expose a very small, explicit feature API for static HTML handlers.
   window.LimoV2={
     renderWorld,loadWorld,filterWorld,openCreateRoom,closeCreateRoom,createRoom,openRoom,sendRoomMessage,leaveRoom,createPoll,toggleRoomVoice,beginRoomExpiryHold,endRoomExpiryHold,cancelRoomExpiryHold,handleRoomSendClick,openRoomExpiryMenu,closeRoomExpiryMenu,setRoomMessageExpiry,
-    renderSpace,createSpace,joinSpace,copySpaceInvite,addTask,renderAI,aiSummarize,aiTasks,aiLinks,aiSearch,aiReply,copyAI,
+    renderSpace,createSpace,joinSpace,copySpaceInvite,addTask,addNote,renderAI,aiSummarize,aiTasks,aiLinks,aiSearch,aiReply,copyAI,
     renderMini,miniDice,miniCalculator,calcRun,miniText,textStats,miniPicker,pickOption,
-    renderSchedule,saveScheduled,renderPremium,renderLanguage,saveLanguage,renderProfileId,renderInstall,renderDiagnostics,runDiagnostics,copyText,startMainVoiceNote,openUser,chooseRoomMedia,uploadRoomMedia,requestPremium,copyPremiumRequest,
+    renderSchedule,saveScheduled,renderPremium,renderLanguage,saveLanguage,renderProfileId,renderInstall,renderDiagnostics,runDiagnostics,copyText,startMainVoiceNote,applyBasicLocale,openUser,chooseRoomMedia,uploadRoomMedia,requestPremium,copyPremiumRequest,startPrivateChat,loadOlderRoomMessages,
     installApp,flushOutbox,loadRoomMessages
   };
 
@@ -635,6 +764,8 @@
   };
   window.renderSubMenu=(key)=>{try{if(featureRender(key))return;baseRender(key);}catch(error){console.error('Settings page failed:',key,error);featureHeader('خطا در بارگذاری تنظیمات');setBody(`<div class="limo-v2-card"><h3>این بخش بارگذاری نشد</h3><p class="limo-v2-muted">${esc(error?.message||'خطای نامشخص')}</p><button class="limo-v2-btn secondary" onclick="LimoV2.renderWorld()">بازگشت به جهان لیمو</button></div>`);}};
   window.startLimoVoiceNote=startMainVoiceNote;
+
+  document.documentElement.lang=prefs().locale==='en'?'en':'fa';document.documentElement.dir=prefs().direction==='ltr'?'ltr':'rtl';if(prefs().locale==='en')applyBasicLocale('en');const localeObserver=new MutationObserver(()=>{if(prefs().locale==='en')applyBasicLocale('en');});localeObserver.observe(document.body,{childList:true,subtree:true,characterData:true});
 
   // On sign-in, attempt due scheduled messages and queued text. This is not a push daemon:
   // the client must be open unless pg_cron is enabled in the Supabase project.

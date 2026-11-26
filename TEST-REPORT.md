@@ -1,26 +1,21 @@
-# گزارش بررسی ایستای Limo Chat 2.01
+# Test report — Limo Chat 2.04.1
 
-تاریخ بسته‌بندی: 2026-11-23
+## Static checks
+`node test-static.mjs` completed with **26 passed, 0 failed**. Checks cover duplicate HTML IDs, local file references, inline module syntax, `limo-v2.js` syntax, manifest JSON, module-loader and bridge ordering, session settings, per-user Realtime subscription, device heartbeat, SQL RPC/RLS markers, revoked-session non-resurrection, Edge Function JWT/IP/CORS handling, vector logo references, and additive migration safety.
 
-## بررسی‌های انجام‌شده در این محیط
+## Not tested against live services
+- SQL execution against the user's actual Supabase database.
+- Live Auth, RLS, Realtime publication and Storage behavior.
+- Edge Function deployment and IP header availability.
+- Two-device end-to-end session revocation on real browsers.
+- Full browser runtime against the live Supabase project.
 
-- `node --check` برای ماژول `limo-v2.js`، اسکریپت ماژول داخل `index.html` و JavaScript پنل `admin.html` بدون خطای نحوی.
-- بررسی HTML صفحه اصلی و پنل مدیر: هیچ شناسه تکراری در DOM اولیه یافت نشد.
-- اعتبارسنجی JSON manifest و وجود تمام آیکون‌های معرفی‌شده.
-- بررسی اینکه صفحات تنظیمات پایه، دکمه‌های ذخیره‌سازی و تنظیمات تازه عیب‌یابی به توابع JavaScript متصل‌اند.
-- بررسی کد TTL در چت اصلی و اتاق‌های World: انتخابگر فقط پس از نگه‌داشتن دکمه ارسال باز می‌شود و انتخاب در فیلد مخفی ذخیره می‌شود.
-- بررسی اتصال پروفایل فرستنده به `startPrivateChat` / `openUser` در گفتگوی عمومی و اتاق‌های World.
-- بررسی قفل Premium در رابط و مسیرهای ذخیره‌سازی عکس، ویس و ویدئو و محدودیت‌های حجمی.
-- بازبینی ایستای SQL migration برای تریگر رسانه، مالکیت فرستنده، وضعیت تعلیق و Storage policy.
-- بررسی سیاست خواندن Storage برای پوشه `global` و مسیر UUID تا cast نامعتبر رشته `global` به UUID رخ ندهد.
-- بررسی JSON فایل manifest و مسیرهای نسبی PWA.
+## Reproduce
+Extract the ZIP, run `node test-static.mjs` from its root. Apply the SQL only after backing up the existing project and confirming migrations 2.0–2.03 are already installed.
 
-## موارد آزمایش‌نشده
 
-- اجرای migration روی پروژه Supabase کاربر.
-- تست زنده ورود، RLS، Realtime، Storage، Premium و cron.
-- تست مرورگر واقعی روی Android/iOS/Desktop.
-- نمایش واقعی اعلان‌ها روی دستگاه‌های مقصد و محدودیت‌های مجوز/بهینه‌سازی باتری سیستم‌عامل.
-- تست تماس، عملکرد شبکه، تست بار یا ممیزی امنیتی.
-
-این گزارش صرفاً نتیجه تحلیل کد و آزمون‌های ایستا در محیط ساخت است؛ گواهی آماده‌بودن برای تولید نیست. در این محیط، اجرای مرورگر انتها‌به‌انتها و اتصال به پروژه زنده Supabase در دسترس نبود. پیش از انتشار عمومی، چک‌لیست `SETUP-SUPABASE.md` و `SECURITY.md` را با دو حساب واقعی اجرا کن.
+## 2.04.2 regression checks
+- JavaScript module syntax: passed (Node.js --check).
+- Apps navigation icon class replacement: passed (source inspection).
+- Database schema error diagnostic path: passed (source inspection).
+- Live Supabase message insertion: NOT TESTED; requires the project's authenticated session and live database.
