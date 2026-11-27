@@ -1,39 +1,637 @@
+
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#a7ef45"><title>مدیریت کل پروژه | Limo Chat</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#a7ef45">
+<title>مدیریت کل پروژه | Limo Chat</title>
 <style>
-:root{font-family:Tahoma,Arial,sans-serif;color:#203019;background:#f3f7ed;--g:#a7ef45;--gd:#477d1d;--line:#dfe9d5;--muted:#71806a;--red:#b52f2f}*{box-sizing:border-box}body{margin:0;padding:16px;min-height:100vh}button,input,select,textarea{font:inherit}button{border:0;border-radius:11px;padding:10px 14px;background:var(--g);color:#203019;font-weight:700;cursor:pointer;transition:transform .16s,filter .16s,box-shadow .16s}button:active{transform:scale(.97)}button:hover{filter:brightness(.97);box-shadow:0 5px 15px #578c2722}button:disabled{opacity:.55;cursor:wait}.danger{background:#ffe4e1;color:var(--red)}.secondary{background:#edf4e6}.wrap{max-width:1250px;margin:auto}h1{color:var(--gd);margin:8px 0}.muted,small{color:var(--muted);line-height:1.8}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:17px;margin:14px 0;box-shadow:0 7px 24px #26351e08}.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.row>*{min-width:0}.row input,.row select{flex:1}input,select,textarea{border:1px solid var(--line);border-radius:10px;padding:11px;background:#fff;min-width:0;max-width:100%;outline:none}textarea{width:100%;min-height:90px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:#91ce38;box-shadow:0 0 0 3px #a7ef4525}.status{padding:11px;border-radius:10px;background:#f1f5ec;margin-top:10px;font-size:13px;line-height:1.8;overflow-wrap:anywhere}.error{background:#fff0ef;color:#a52d2d}.success{background:#eff9e5;color:#477c19}.hidden{display:none!important}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.table-wrap{overflow:auto;margin-top:12px}table{width:100%;min-width:850px;border-collapse:collapse}th,td{text-align:right;padding:10px;border-bottom:1px solid #edf0e9;font-size:12px;vertical-align:middle}th{background:#f5f8f1;color:#526347;position:sticky;top:0}td button{margin:2px;padding:7px 9px;font-size:11px}.section{color:var(--gd);margin:0 0 12px}.pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#eff7e8;font-size:11px}.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.toolbar input{flex:1}.tabs{display:flex;gap:7px;flex-wrap:wrap}.tabs button.active{background:#477d1d;color:white}.metric{font-size:24px;font-weight:900;color:var(--gd)}@media(max-width:600px){body{padding:9px}.card{padding:13px}.row>*{flex-basis:100%}.row button{width:100%}}
+:root{font-family:Tahoma,Arial,sans-serif;color:#203019;background:#f3f7ed;--g:#a7ef45;--gd:#477d1d;--line:#dfe9d5;--muted:#71806a;--red:#b52f2f}
+*{box-sizing:border-box}
+body{margin:0;padding:0;min-height:100vh;background:#f5f8f1}
+button,input,select,textarea{font:inherit}
+button{border:0;border-radius:11px;padding:10px 14px;background:var(--g);color:#203019;font-weight:700;cursor:pointer;transition:transform .16s,filter .16s,box-shadow .16s}
+button:active{transform:scale(.97)}
+button:hover{filter:brightness(.97);box-shadow:0 5px 15px #578c2722}
+button:disabled{opacity:.55;cursor:wait}
+.danger{background:#ffe4e1;color:var(--red)}
+.secondary{background:#edf4e6}
+.wrap{max-width:none;margin:0}
+h1{color:var(--gd);margin:8px 0}
+.muted,small{color:var(--muted);line-height:1.8}
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:17px;margin:14px 0;box-shadow:0 7px 24px #26351e08}
+.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.row>*{min-width:0}
+.row input,.row select{flex:1}
+input,select,textarea{border:1px solid var(--line);border-radius:10px;padding:11px;background:#fff;min-width:0;max-width:100%;outline:none}
+textarea{width:100%;min-height:90px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:#91ce38;box-shadow:0 0 0 3px #a7ef4525}
+.status{padding:11px;border-radius:10px;background:#f1f5ec;margin-top:10px;font-size:13px;line-height:1.8;overflow-wrap:anywhere}
+.error{background:#fff0ef;color:#a52d2d}
+.success{background:#eff9e5;color:#477c19}
+.hidden{display:none!important}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.table-wrap{overflow:auto;margin-top:12px}
+table{width:100%;min-width:850px;border-collapse:collapse}
+th,td{text-align:right;padding:10px;border-bottom:1px solid #edf0e9;font-size:12px;vertical-align:middle}
+th{background:#f5f8f1;color:#526347;position:sticky;top:0}
+td button{margin:2px;padding:7px 9px;font-size:11px}
+.section{color:var(--gd);margin:0 0 12px}
+.pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#eff7e8;font-size:11px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toolbar input{flex:1}
+.metric{font-size:24px;font-weight:900;color:var(--gd)}
+:root{--g:#a7ef45;--gd:#477d1d;--line:#e5ecde;--muted:#78856f}
+.admin-layout{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh}
+.sidebar{background:#172515;color:#eef8e8;padding:24px 16px;display:flex;flex-direction:column;gap:8px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:12px;padding:8px 8px 25px}
+.brand-mark{width:43px;height:43px;border-radius:15px;background:var(--g);color:#213319;display:grid;place-items:center;font-size:25px;font-weight:900}
+.brand b{display:block;font-size:16px}
+.brand small{color:#a9bd9e}
+.side-caption{font-size:11px;color:#93a78a;padding:16px 10px 5px}
+.nav-item{background:transparent;color:#dce9d5;text-align:right;width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:12px;font-weight:600}
+.nav-item span{width:22px;text-align:center;font-size:18px}
+.nav-item:hover,.nav-item.active{background:#30452a;color:#c9ff8b;box-shadow:none}
+.side-note{margin-top:auto;font-size:11px;line-height:2;color:#a5b59c;padding:12px;border:1px solid #34472e;border-radius:12px}
+.admin-main{min-width:0;padding:25px clamp(14px,3vw,38px)}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
+.topbar h1{font-size:25px;margin:5px 0;color:#263b1e}
+.topbar small{font-size:11px}
+.top-actions{display:flex;gap:8px}
+.top-actions button{white-space:nowrap}
+.page-section{max-width:1400px}
+.page-heading{margin:18px 2px 15px}
+.page-heading span{font-size:11px;color:var(--gd);font-weight:700}
+.page-heading h2{margin:5px 0;font-size:23px}
+.page-heading p{margin:0;color:var(--muted);font-size:13px}
+.card{border:1px solid #e6eddf;border-radius:17px;box-shadow:0 8px 28px #26351e08}
+.welcome-card{padding:14px 18px}
+.metric{font-size:29px}
+.grid{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.table-wrap{border:1px solid #edf1e9;border-radius:12px}
+table{min-width:900px}
+th{background:#f4f8ef}
+.status{border-radius:12px}
+#loginCard{max-width:650px;margin:12vh auto;padding:25px}
+#loginCard h3{margin-top:0;color:var(--gd)}
+@media(max-width:800px){
+.admin-layout{grid-template-columns:1fr}
+.sidebar{position:relative;height:auto;padding:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.brand{grid-column:1/-1;padding:5px 8px 12px}
+.side-caption,.side-note{display:none}
+.nav-item{font-size:12px;padding:10px 8px}
+.nav-item span{font-size:15px}
+.admin-main{padding:15px 10px}
+.topbar{align-items:flex-start}
+.topbar h1{font-size:19px}
+.top-actions{flex-direction:column}
+.top-actions button{padding:8px 10px}
+.row>*{flex-basis:auto}
+.row button{width:auto}
+}
+@media(max-width:430px){
+.sidebar{grid-template-columns:repeat(2,1fr)}
+.topbar{flex-direction:column}
+.top-actions{width:100%;flex-direction:row}
+.top-actions button{flex:1}
+}
 </style>
-</head><body><main class="wrap">
-<h1>پنل مدیریت کل Limo Chat</h1><p class="muted">مدیریت کاربران، اشتراک، تعلیق زمان‌دار، گزارش‌ها و حذف پیام با متن دقیق. همه عملیات حساس از RPC امن دیتابیس انجام می‌شوند.</p>
-<section class="card" id="loginCard"><h3>ورود مدیر</h3><div class="row"><input id="username" autocomplete="username" placeholder="آیدی مدیر بدون @" dir="ltr"><input id="password" type="password" autocomplete="current-password" placeholder="رمز عبور"><button id="loginBtn">ورود</button></div><div id="loginStatus" class="status">اطلاعات حساب مدیر را وارد کنید.</div></section>
+</head>
+<body>
+<main class="wrap">
+
+<section class="card" id="loginCard">
+<h3>ورود مدیر Limo Chat</h3>
+<div class="row">
+<input id="username" autocomplete="username" placeholder="آیدی مدیر بدون @" dir="ltr">
+<input id="password" type="password" autocomplete="current-password" placeholder="رمز عبور">
+<button id="loginBtn">ورود</button>
+</div>
+<div id="loginStatus" class="status">اطلاعات حساب مدیر را وارد کنید.</div>
+</section>
+
 <div id="adminPanel" class="hidden">
-<section class="card"><div class="row"><b id="identity">مدیر</b><button id="refreshBtn">به‌روزرسانی همه بخش‌ها</button><button id="logoutBtn" class="danger">خروج</button></div><div id="panelStatus" class="status success">دسترسی مدیر بررسی شده است.</div></section>
-<div class="grid"><section class="card"><div class="muted">کاربران بارگذاری‌شده</div><div class="metric" id="userCount">—</div></section><section class="card"><div class="muted">گزارش‌های دریافت‌شده</div><div class="metric" id="reportCount">—</div></section><section class="card"><div class="muted">مدیر واردشده</div><div id="adminId" dir="ltr" style="overflow-wrap:anywhere">—</div></section></div>
-<section class="card"><h3 class="section">مدیریت کاربران</h3><div class="toolbar"><input id="userSearch" placeholder="جستجو با آیدی یا نام نمایشی"><button id="searchUsersBtn">جستجو</button></div><div id="usersStatus" class="status">آماده دریافت کاربران</div><div class="table-wrap"><table><thead><tr><th>آیدی</th><th>شناسه UUID</th><th>نام نمایشی</th><th>ثبت‌نام</th><th>Premium</th><th>تعلیق</th><th>عملیات</th></tr></thead><tbody id="usersTable"></tbody></table></div></section>
-<section class="card"><h3 class="section">مدیریت گزارش‌ها</h3><div class="toolbar"><select id="reportFilter"><option value="all">همه گزارش‌ها</option><option value="new">جدید</option><option value="reviewing">در حال بررسی</option><option value="resolved">رسیدگی‌شده</option><option value="rejected">ردشده</option></select><button id="loadReportsBtn">بارگذاری</button></div><div id="reportsStatus" class="status">آماده دریافت گزارش‌ها</div><div class="table-wrap"><table><thead><tr><th>زمان</th><th>گزارش‌دهنده</th><th>نوع</th><th>هدف</th><th>دلیل</th><th>وضعیت</th><th>عملیات</th></tr></thead><tbody id="reportsTable"></tbody></table></div></section>
-<section class="card"><h3 class="section">حذف پیام با متن پیام</h3><p class="muted">متن را دقیقاً کپی و اینجا جای‌گذاری کنید. تمام پیام‌هایی که متنشان دقیقاً برابر باشد در گفتگوهای خصوصی، گفتگوی عمومی و اتاق‌های عمومی حذف می‌شوند. این عملیات قابل بازگشت نیست.</p><textarea id="exactMessageText" placeholder="متن دقیق پیام را اینجا پیست کنید"></textarea><div class="row"><button id="deleteByTextBtn" class="danger">حذف تمام تطابق‌های دقیق</button></div><div id="deleteStatus" class="status">هنوز عملیاتی انجام نشده است.</div></section>
-</div></main>
+<div class="admin-layout">
+
+<aside class="sidebar">
+<div class="brand">
+<span class="brand-mark">L</span>
+<div><b>Limo Chat</b><small>مرکز مدیریت</small></div>
+</div>
+
+<div class="side-caption">مدیریت اصلی</div>
+<button class="nav-item active" data-page="overview"><span>▦</span> نمای کلی</button>
+<button class="nav-item" data-page="usersSection"><span>♙</span> کاربران</button>
+<button class="nav-item" data-page="reportsSection"><span>⚑</span> گزارش‌ها</button>
+
+<div class="side-caption">امنیت و محتوا</div>
+<button class="nav-item" data-page="deleteSection"><span>⌫</span> حذف پیام با متن</button>
+
+<div class="side-note">
+دسترسی‌های حساس فقط برای مدیران مجاز است و باید مطابق قوانین و سیاست حریم خصوصی استفاده شود.
+</div>
+</aside>
+
+<div class="admin-main">
+
+<header class="topbar">
+<div>
+<small>پنل مدیریت / Limo Chat</small>
+<h1>داشبورد مدیریتی</h1>
+</div>
+<div class="top-actions">
+<button id="refreshBtn">↻ به‌روزرسانی</button>
+<button id="logoutBtn" class="danger">خروج</button>
+</div>
+</header>
+
+<section class="page-section" id="overview">
+<section class="card welcome-card">
+<b id="identity">مدیر</b>
+<div id="panelStatus" class="status success">دسترسی مدیر بررسی شده است.</div>
+</section>
+
+<div class="grid">
+<section class="card">
+<div class="muted">کاربران بارگذاری‌شده</div>
+<div class="metric" id="userCount">—</div>
+</section>
+<section class="card">
+<div class="muted">گزارش‌های دریافت‌شده</div>
+<div class="metric" id="reportCount">—</div>
+</section>
+<section class="card">
+<div class="muted">مدیر واردشده</div>
+<div id="adminId" dir="ltr" style="overflow-wrap:anywhere">—</div>
+</section>
+</div>
+</section>
+
+<section class="page-section hidden" id="usersSection">
+<div class="page-heading">
+<span>مدیریت حساب‌ها</span>
+<h2>کاربران</h2>
+<p>جستجو، اشتراک ویژه و مدیریت تعلیق کاربران</p>
+</div>
+
+<section class="card">
+<h3 class="section">مدیریت کاربران</h3>
+<div class="toolbar">
+<input id="userSearch" placeholder="جستجو با آیدی یا نام نمایشی">
+<button id="searchUsersBtn">جستجو</button>
+</div>
+<div id="usersStatus" class="status">آماده دریافت کاربران</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>آیدی</th><th>شناسه UUID</th><th>نام نمایشی</th><th>ثبت‌نام</th><th>Premium</th><th>تعلیق</th><th>عملیات</th>
+</tr>
+</thead>
+<tbody id="usersTable"></tbody>
+</table>
+</div>
+</section>
+</section>
+
+<section class="page-section hidden" id="reportsSection">
+<div class="page-heading">
+<span>مرکز رسیدگی</span>
+<h2>گزارش‌های کاربران</h2>
+<p>بررسی و ثبت نتیجه رسیدگی به گزارش‌ها</p>
+</div>
+
+<section class="card">
+<h3 class="section">مدیریت گزارش‌ها</h3>
+<div class="toolbar">
+<select id="reportFilter">
+<option value="all">همه گزارش‌ها</option>
+<option value="new">جدید</option>
+<option value="reviewing">در حال بررسی</option>
+<option value="resolved">رسیدگی‌شده</option>
+<option value="rejected">ردشده</option>
+</select>
+<button id="loadReportsBtn">بارگذاری</button>
+</div>
+<div id="reportsStatus" class="status">آماده دریافت گزارش‌ها</div>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>زمان</th><th>گزارش‌دهنده</th><th>نوع</th><th>هدف</th><th>دلیل</th><th>وضعیت</th><th>عملیات</th>
+</tr>
+</thead>
+<tbody id="reportsTable"></tbody>
+</table>
+</div>
+</section>
+</section>
+
+<section class="page-section hidden" id="deleteSection">
+<div class="page-heading">
+<span>مدیریت محتوا</span>
+<h2>حذف پیام</h2>
+<p>حذف پیام‌های دارای متن دقیقاً یکسان</p>
+</div>
+
+<section class="card">
+<h3 class="section">حذف پیام با متن پیام</h3>
+<p class="muted">
+متن را دقیقاً وارد کنید. فقط پیام‌هایی با متن کاملاً برابر در جدول‌های پیام خصوصی، عمومی و اتاق‌ها حذف می‌شوند. این عملیات قابل بازگشت نیست و باید فقط در چارچوب رسیدگی مجاز انجام شود.
+</p>
+<div class="status">
+این ابزار برای حذف محتوای گزارش‌شده یا غیرمجاز است؛ پنل قابلیت مشاهدهٔ مخفیانهٔ گفتگوهای خصوصی کاربران را فراهم نمی‌کند.
+</div>
+<textarea id="exactMessageText" placeholder="متن دقیق پیام را اینجا پیست کنید"></textarea>
+<div class="row">
+<button id="deleteByTextBtn" class="danger">حذف تمام تطابق‌های دقیق</button>
+</div>
+<div id="deleteStatus" class="status">هنوز عملیاتی انجام نشده است.</div>
+</section>
+</section>
+
+</div>
+</div>
+</div>
+</main>
+
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
+
 const SUPABASE_URL='https://zvgpqakgaudtrxjgsrfk.supabase.co';
 const SUPABASE_KEY='sb_publishable_lSw6y-X7uR-H8QBxelToNQ_0RzQ9P2P';
-const db=createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const $=id=>document.getElementById(id);let busy=false,admin=null;
-const status=(id,msg,type='')=>{const el=$(id);el.className='status '+type;el.textContent=msg};
-const err=(id,e)=>{console.error(e);status(id,'خطا: '+(e?.message||e?.details||String(e)), 'error')};
+
+const db=createClient(SUPABASE_URL,SUPABASE_KEY,{
+auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
+});
+
+const $=id=>document.getElementById(id);
+let busy=false,admin=null;
+
+const status=(id,msg,type='')=>{
+const el=$(id);
+el.className='status '+type;
+el.textContent=msg;
+};
+
+const err=(id,e)=>{
+console.error(e);
+status(id,'خطا: '+(e?.message||e?.details||String(e)),'error');
+};
+
 const emailFor=u=>String(u||'').trim().replace(/^@/,'').toLowerCase()+'@limochat.app';
 const date=v=>v?new Date(v).toLocaleString('fa-IR'):'—';
-async function verify(){const {data,error}=await db.auth.getSession();if(error)throw error;const user=data.session?.user;if(!user)return false;const {data:row,error:e}=await db.from('limo_admins').select('user_id').eq('user_id',user.id).maybeSingle();if(e)throw e;if(!row)return false;admin=user;$('loginCard').classList.add('hidden');$('adminPanel').classList.remove('hidden');$('identity').textContent='مدیر: '+(user.user_metadata?.username||user.email||user.id);$('adminId').textContent=user.id;return true;}
-async function login(){if(busy)return;const u=$('username').value.trim(),p=$('password').value;if(!u||!p)return status('loginStatus','آیدی و رمز عبور الزامی است.','error');busy=true;$('loginBtn').disabled=true;status('loginStatus','در حال ورود...');try{const {data,error}=await db.auth.signInWithPassword({email:emailFor(u),password:p});if(error)throw error;if(!data.session)throw Error('نشست دریافت نشد');if(!await verify()){await db.auth.signOut();throw Error('این حساب در جدول limo_admins مدیر نیست.');}status('panelStatus','ورود مدیر تأیید شد.','success');await refreshAll();}catch(e){err('loginStatus',e)}finally{busy=false;$('loginBtn').disabled=false;}}
-function td(tr,value){const x=document.createElement('td');x.textContent=value??'';tr.append(x);return x;}
-async function loadUsers(){status('usersStatus','در حال دریافت کاربران...');try{let q=db.from('profiles').select('id,username,display_name,is_premium,premium_expires_at,is_suspended,suspended_until,suspension_reason,created_at').order('created_at',{ascending:false}).limit(200);const term=$('userSearch').value.trim().replace(/[(),]/g,'');if(term)q=q.or(`username.ilike.%${term}%,display_name.ilike.%${term}%`);const {data,error}=await q;if(error)throw error;const body=$('usersTable');body.replaceChildren();for(const u of data||[]){const tr=document.createElement('tr');td(tr,'@'+(u.username||''));td(tr,u.id);td(tr,u.display_name||'');td(tr,date(u.created_at));td(tr,u.is_premium?`فعال${u.premium_expires_at?' تا '+date(u.premium_expires_at):' (بدون تاریخ پایان)'}`:'غیرفعال');td(tr,u.is_suspended?`تعلیق‌شده${u.suspended_until?' تا '+date(u.suspended_until):' دائمی'}`:'فعال');const ops=td(tr,'');const premium=document.createElement('button');premium.textContent=u.is_premium?'لغو Premium':'ارتقای Premium';premium.onclick=()=>premiumAction(u);const suspend=document.createElement('button');suspend.className='danger';suspend.textContent=u.is_suspended?'رفع تعلیق':'تعلیق زمان‌دار';suspend.onclick=()=>suspensionAction(u);ops.append(premium,suspend);body.append(tr);} $('userCount').textContent=(data||[]).length;status('usersStatus',`${(data||[]).length} کاربر دریافت شد.`,'success');}catch(e){err('usersStatus',e)}}
-async function premiumAction(u){try{if(u.is_premium){if(!confirm(`اشتراک @${u.username} لغو شود؟`))return;const {error}=await db.rpc('limo_admin_revoke_premium',{target_user:u.id});if(error)throw error;}else{const months=prompt('مدت اشتراک به ماه (۱، ۳، ۶ یا ۱۲):','1');if(months===null)return;const n=Number(months);if(![1,3,6,12].includes(n))throw Error('مدت باید ۱، ۳، ۶ یا ۱۲ ماه باشد.');const until=new Date();until.setMonth(until.getMonth()+n);if(!confirm(`Premium برای @${u.username} تا ${date(until.toISOString())} فعال شود؟`))return;const {error}=await db.rpc('limo_admin_grant_premium',{target_user:u.id,valid_until:until.toISOString()});if(error)throw error;}status('usersStatus','وضعیت اشتراک تغییر کرد.','success');await loadUsers();}catch(e){err('usersStatus',e)}}
-async function suspensionAction(u){try{if(u.is_suspended){if(!confirm(`تعلیق @${u.username} برداشته شود؟`))return;const {error}=await db.rpc('limo_admin_set_suspension',{p_target_user:u.id,p_duration_seconds:0,p_reason:''});if(error)throw error;}else{const options={'10 دقیقه':600,'1 ساعت':3600,'24 ساعت':86400,'7 روز':604800,'30 روز':2592000,'90 روز':7776000,'دائمی':31536000};const choice=prompt('مدت تعلیق را وارد کنید: 10m، 1h، 24h، 7d، 30d، 90d یا permanent','24h');if(choice===null)return;const map={ '10m':600,'1h':3600,'24h':86400,'7d':604800,'30d':2592000,'90d':7776000,'permanent':-1};const seconds=map[choice.trim()];if(!seconds)throw Error('مدت نامعتبر است.');const reason=prompt('دلیل تعلیق (اختیاری):','نقض قوانین');const {error}=await db.rpc('limo_admin_set_suspension',{p_target_user:u.id,p_duration_seconds:seconds,p_reason:reason||''});if(error)throw error;}status('usersStatus','وضعیت تعلیق تغییر کرد.','success');await loadUsers();}catch(e){err('usersStatus',e)}}
-async function loadReports(){status('reportsStatus','در حال دریافت گزارش‌ها...');try{let q=db.from('reports').select('*').order('created_at',{ascending:false}).limit(200);const filter=$('reportFilter').value;if(filter!=='all')q=q.eq('status',filter);const {data,error}=await q;if(error)throw error;const body=$('reportsTable');body.replaceChildren();for(const r of data||[]){const tr=document.createElement('tr');td(tr,date(r.created_at));td(tr,r.reporter_username||r.reporter_id||'');td(tr,r.type);td(tr,r.target_name||r.target_uid||'');td(tr,r.reason);const cell=td(tr,'');const select=document.createElement('select');for(const v of ['new','reviewing','resolved','rejected']){const o=document.createElement('option');o.value=v;o.textContent=({new:'جدید',reviewing:'در حال بررسی',resolved:'رسیدگی‌شده',rejected:'ردشده'})[v];o.selected=v===r.status;select.append(o);}const save=document.createElement('button');save.textContent='ثبت';save.onclick=async()=>{try{const {error}=await db.rpc('limo_admin_update_report',{target_report:r.id,new_status:select.value,note:''});if(error)throw error;await loadReports();}catch(e){err('reportsStatus',e)}};cell.append(select,save);body.append(tr);} $('reportCount').textContent=(data||[]).length;status('reportsStatus',`${(data||[]).length} گزارش دریافت شد.`,'success');}catch(e){err('reportsStatus',e)}}
-async function deleteByText(){const text=$('exactMessageText').value;if(!text.trim())return status('deleteStatus','متن پیام را وارد کنید.','error');if(!confirm('تمام پیام‌هایی که متنشان دقیقاً برابر متن واردشده است در خصوصی، عمومی و اتاق‌ها حذف شوند؟'))return;const b=$('deleteByTextBtn');b.disabled=true;status('deleteStatus','در حال جستجو و حذف تطابق‌های دقیق...');try{const {data,error}=await db.rpc('limo_admin_delete_message_by_text',{p_exact_text:text});if(error)throw error;const r=data?.[0]||{};status('deleteStatus',`حذف انجام شد — خصوصی: ${r.private_deleted||0}، عمومی: ${r.global_deleted||0}، اتاق‌ها: ${r.room_deleted||0}`,'success');}catch(e){err('deleteStatus',e)}finally{b.disabled=false}}
-async function refreshAll(){await Promise.all([loadUsers(),loadReports()])}
-$('loginBtn').onclick=login;$('password').addEventListener('keydown',e=>{if(e.key==='Enter')login()});$('username').addEventListener('keydown',e=>{if(e.key==='Enter')$('password').focus()});$('refreshBtn').onclick=refreshAll;$('searchUsersBtn').onclick=loadUsers;$('loadReportsBtn').onclick=loadReports;$('reportFilter').onchange=loadReports;$('deleteByTextBtn').onclick=deleteByText;$('logoutBtn').onclick=async()=>{if(confirm('از پنل خارج شوید؟')){await db.auth.signOut();location.reload()}};
-(async()=>{try{status('loginStatus','در حال بررسی نشست...');if(await verify())await refreshAll();else status('loginStatus','برای ورود، اطلاعات مدیر را وارد کنید.')}catch(e){err('loginStatus',e)}})();
-</script></body></html>
+
+async function verify(){
+const {data,error}=await db.auth.getSession();
+if(error)throw error;
+const user=data.session?.user;
+if(!user)return false;
+
+const {data:row,error:e}=await db.from('limo_admins')
+.select('user_id').eq('user_id',user.id).maybeSingle();
+
+if(e)throw e;
+if(!row)return false;
+
+admin=user;
+$('loginCard').classList.add('hidden');
+$('adminPanel').classList.remove('hidden');
+$('identity').textContent='مدیر: '+(user.user_metadata?.username||user.email||user.id);
+$('adminId').textContent=user.id;
+return true;
+}
+
+async function login(){
+if(busy)return;
+const u=$('username').value.trim();
+const p=$('password').value;
+
+if(!u||!p)return status('loginStatus','آیدی و رمز عبور الزامی است.','error');
+
+busy=true;
+$('loginBtn').disabled=true;
+status('loginStatus','در حال ورود...');
+
+try{
+const {data,error}=await db.auth.signInWithPassword({
+email:emailFor(u),password:p
+});
+if(error)throw error;
+if(!data.session)throw Error('نشست دریافت نشد');
+
+if(!await verify()){
+await db.auth.signOut();
+throw Error('این حساب در جدول limo_admins مدیر نیست.');
+}
+
+status('panelStatus','ورود مدیر تأیید شد.','success');
+await refreshAll();
+
+}catch(e){
+err('loginStatus',e);
+}finally{
+busy=false;
+$('loginBtn').disabled=false;
+}
+}
+
+function td(tr,value){
+const x=document.createElement('td');
+x.textContent=value??'';
+tr.append(x);
+return x;
+}
+
+async function loadUsers(){
+status('usersStatus','در حال دریافت کاربران...');
+
+try{
+let q=db.from('profiles')
+.select('id,username,display_name,is_premium,premium_expires_at,is_suspended,suspended_until,suspension_reason,created_at')
+.order('created_at',{ascending:false}).limit(200);
+
+const term=$('userSearch').value.trim().replace(/[(),]/g,'');
+if(term)q=q.or(`username.ilike.%${term}%,display_name.ilike.%${term}%`);
+
+const {data,error}=await q;
+if(error)throw error;
+
+const body=$('usersTable');
+body.replaceChildren();
+
+for(const u of data||[]){
+const tr=document.createElement('tr');
+
+td(tr,'@'+(u.username||''));
+td(tr,u.id);
+td(tr,u.display_name||'');
+td(tr,date(u.created_at));
+
+td(tr,u.is_premium
+?`فعال${u.premium_expires_at?' تا '+date(u.premium_expires_at):' (بدون تاریخ پایان)'}`
+:'غیرفعال');
+
+td(tr,u.is_suspended
+?`تعلیق‌شده${u.suspended_until?' تا '+date(u.suspended_until):' دائمی'}`
+:'فعال');
+
+const ops=td(tr,'');
+
+const premium=document.createElement('button');
+premium.textContent=u.is_premium?'لغو Premium':'ارتقای Premium';
+premium.onclick=()=>premiumAction(u);
+
+const suspend=document.createElement('button');
+suspend.className='danger';
+suspend.textContent=u.is_suspended?'رفع تعلیق':'تعلیق زمان‌دار';
+suspend.onclick=()=>suspensionAction(u);
+
+ops.append(premium,suspend);
+body.append(tr);
+}
+
+$('userCount').textContent=(data||[]).length;
+status('usersStatus',`${(data||[]).length} کاربر دریافت شد.`,'success');
+
+}catch(e){
+err('usersStatus',e);
+}
+}
+
+async function premiumAction(u){
+try{
+if(u.is_premium){
+if(!confirm(`اشتراک @${u.username} لغو شود؟`))return;
+
+const {error}=await db.rpc('limo_admin_revoke_premium',{
+target_user:u.id
+});
+if(error)throw error;
+
+}else{
+const months=prompt('مدت اشتراک به ماه (۱، ۳، ۶ یا ۱۲):','1');
+if(months===null)return;
+
+const n=Number(months);
+if(![1,3,6,12].includes(n))
+throw Error('مدت باید ۱، ۳، ۶ یا ۱۲ ماه باشد.');
+
+const until=new Date();
+until.setMonth(until.getMonth()+n);
+
+if(!confirm(`Premium برای @${u.username} تا ${date(until.toISOString())} فعال شود؟`))return;
+
+const {error}=await db.rpc('limo_admin_grant_premium',{
+target_user:u.id,
+valid_until:until.toISOString()
+});
+if(error)throw error;
+}
+
+status('usersStatus','وضعیت اشتراک تغییر کرد.','success');
+await loadUsers();
+
+}catch(e){
+err('usersStatus',e);
+}
+}
+
+async function suspensionAction(u){
+try{
+if(u.is_suspended){
+if(!confirm(`تعلیق @${u.username} برداشته شود؟`))return;
+
+const {error}=await db.rpc('limo_admin_set_suspension',{
+p_target_user:u.id,
+p_duration_seconds:0,
+p_reason:''
+});
+if(error)throw error;
+
+}else{
+const choice=prompt(
+'مدت تعلیق را وارد کنید: 10m، 1h، 24h، 7d، 30d، 90d یا permanent',
+'24h'
+);
+if(choice===null)return;
+
+const map={
+'10m':600,'1h':3600,'24h':86400,
+'7d':604800,'30d':2592000,
+'90d':7776000,'permanent':-1
+};
+
+const seconds=map[choice.trim()];
+if(seconds===undefined)throw Error('مدت نامعتبر است.');
+
+const reason=prompt('دلیل تعلیق (اختیاری):','نقض قوانین');
+
+const {error}=await db.rpc('limo_admin_set_suspension',{
+p_target_user:u.id,
+p_duration_seconds:seconds,
+p_reason:reason||''
+});
+if(error)throw error;
+}
+
+status('usersStatus','وضعیت تعلیق تغییر کرد.','success');
+await loadUsers();
+
+}catch(e){
+err('usersStatus',e);
+}
+}
+
+async function loadReports(){
+status('reportsStatus','در حال دریافت گزارش‌ها...');
+
+try{
+let q=db.from('reports').select('*')
+.order('created_at',{ascending:false}).limit(200);
+
+const filter=$('reportFilter').value;
+if(filter!=='all')q=q.eq('status',filter);
+
+const {data,error}=await q;
+if(error)throw error;
+
+const body=$('reportsTable');
+body.replaceChildren();
+
+for(const r of data||[]){
+const tr=document.createElement('tr');
+
+td(tr,date(r.created_at));
+td(tr,r.reporter_username||r.reporter_id||'');
+td(tr,r.type);
+td(tr,r.target_name||r.target_uid||'');
+td(tr,r.reason);
+
+const cell=td(tr,'');
+const select=document.createElement('select');
+
+for(const v of ['new','reviewing','resolved','rejected']){
+const o=document.createElement('option');
+o.value=v;
+o.textContent=({
+new:'جدید',
+reviewing:'در حال بررسی',
+resolved:'رسیدگی‌شده',
+rejected:'ردشده'
+})[v];
+o.selected=v===r.status;
+select.append(o);
+}
+
+const save=document.createElement('button');
+save.textContent='ثبت';
+
+save.onclick=async()=>{
+try{
+const {error}=await db.rpc('limo_admin_update_report',{
+target_report:r.id,
+new_status:select.value,
+note:''
+});
+if(error)throw error;
+await loadReports();
+}catch(e){
+err('reportsStatus',e);
+}
+};
+
+cell.append(select,save);
+body.append(tr);
+}
+
+$('reportCount').textContent=(data||[]).length;
+status('reportsStatus',`${(data||[]).length} گزارش دریافت شد.`,'success');
+
+}catch(e){
+err('reportsStatus',e);
+}
+}
+
+async function deleteByText(){
+const text=$('exactMessageText').value;
+
+if(!text.trim())
+return status('deleteStatus','متن پیام را وارد کنید.','error');
+
+if(!confirm('تمام پیام‌هایی که متنشان دقیقاً برابر متن واردشده است در خصوصی، عمومی و اتاق‌ها حذف شوند؟'))
+return;
+
+const b=$('deleteByTextBtn');
+b.disabled=true;
+status('deleteStatus','در حال جستجو و حذف تطابق‌های دقیق...');
+
+try{
+const {data,error}=await db.rpc('limo_admin_delete_message_by_text',{
+p_exact_text:text
+});
+
+if(error)throw error;
+
+const r=data?.[0]||{};
+status('deleteStatus',
+`حذف انجام شد — خصوصی: ${r.private_deleted||0}، عمومی: ${r.global_deleted||0}، اتاق‌ها: ${r.room_deleted||0}`,
+'success'
+);
+
+}catch(e){
+err('deleteStatus',e);
+}finally{
+b.disabled=false;
+}
+}
+
+async function refreshAll(){
+await Promise.all([loadUsers(),loadReports()]);
+}
+
+document.querySelectorAll('.nav-item').forEach(btn=>{
+btn.addEventListener('click',()=>{
+document.querySelectorAll('.nav-item').forEach(x=>{
+x.classList.toggle('active',x===btn);
+});
+document.querySelectorAll('.page-section').forEach(x=>{
+x.classList.toggle('hidden',x.id!==btn.dataset.page);
+});
+});
+});
+
+$('loginBtn').onclick=login;
+$('password').addEventListener('keydown',e=>{
+if(e.key==='Enter')login();
+});
+$('username').addEventListener('keydown',e=>{
+if(e.key==='Enter')$('password').focus();
+});
+
+$('refreshBtn').onclick=refreshAll;
+$('searchUsersBtn').onclick=loadUsers;
+$('loadReportsBtn').onclick=loadReports;
+$('reportFilter').onchange=loadReports;
+$('deleteByTextBtn').onclick=deleteByText;
+
+$('logoutBtn').onclick=async()=>{
+if(confirm('از پنل خارج شوید؟')){
+await db.auth.signOut();
+location.reload();
+}
+};
+
+(async()=>{
+try{
+status('loginStatus','در حال بررسی نشست...');
+if(await verify())await refreshAll();
+else status('loginStatus','برای ورود، اطلاعات مدیر را وارد کنید.');
+}catch(e){
+err('loginStatus',e);
+}
+})();
+</script>
+</body>
+</html>
